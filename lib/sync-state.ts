@@ -1,7 +1,9 @@
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {cache} from 'react';
 
-export async function getLastSynced(): Promise<string> {
+/** Cached so the sidebar badge stays static across the prerender pass. */
+export const getLastSynced = cache(async (): Promise<string> => {
     try {
         const raw = await readFile(join(process.cwd(), 'public', 'sync-state.json'), 'utf8');
         const state = JSON.parse(raw) as { sha?: string };
@@ -9,4 +11,4 @@ export async function getLastSynced(): Promise<string> {
     } catch {
         return 'bootstrap';
     }
-}
+});

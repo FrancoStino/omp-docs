@@ -60,7 +60,7 @@ function pageForUpstreamPath(file) {
 	return path.join(DOCS, `${slug}.mdx`);
 }
 
-async function askModel(page, diff) {
+async function askModel({pagePath, pageBody, diff}) {
 	const res = await fetch(`${BASE}/chat/completions`, {
 		method: 'POST',
 		headers: {'Content-Type': 'application/json', Authorization: `Bearer ${KEY}`},
@@ -69,7 +69,7 @@ async function askModel(page, diff) {
 			temperature: 0.2,
 			messages: [
 				{role: 'system', content: SYSTEM},
-				{role: 'user', content: `UPSTREAM DIFF\n${diff}\n\nCURRENT PAGE (${page})\n${page}`},
+				{role: 'user', content: `UPSTREAM DIFF\n${diff}\n\nCURRENT PAGE (${pagePath})\n${pageBody}`},
 			],
 		}),
 	});
@@ -126,7 +126,7 @@ for (const page of pages) {
 	}
 
 	try {
-		const after = await askModel(before, diff);
+		const after = await askModel({pagePath: rel, pageBody: before, diff});
 		const problem = validate(before, after);
 		if (problem) {
 			failed++;

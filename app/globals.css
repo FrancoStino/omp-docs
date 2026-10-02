@@ -98,6 +98,90 @@
   color: transparent;
 }
 
+/* ------------------------------------------------------------------
+   1. Control sizing: every button, input and trigger shares one height
+      scale, so the navbar, the chat panel and the search dialog line up.
+   ------------------------------------------------------------------ */
+button[class*='inline-flex'],
+input[type='text'],
+input[type='search'],
+[data-search-anchor] button {
+  min-height: 2.25rem;
+}
+
+button[aria-label='Ask AI'],
+button[data-search-trigger] {
+  height: 2.25rem;
+}
+
+/* The chat composer input matches the button row above it */
+#ai-composer input,
+[data-sidebar] input {
+  min-height: 2.25rem;
+}
+
+/* ------------------------------------------------------------------
+   2. Code blocks: always near-black, in light and dark mode, so the
+      syntax colours read the same either way. Shiki's own background
+      comes from --shiki-light-bg / --shiki-dark-bg and is overridden.
+   ------------------------------------------------------------------ */
+figure.shiki,
+figure[class*='shiki'] {
+  background-color: #0b0b0e;
+  border-color: #1c1c22;
+}
+
+figure.shiki pre,
+figure[class*='shiki'] pre {
+  background-color: #0b0b0e !important;
+}
+
+figure.shiki pre code span,
+figure[class*='shiki'] pre code span {
+  /* neutral.css ships light Shiki colours first; force the dark set */
+  color: var(--shiki-dark, inherit) !important;
+}
+
+/* Inline code also sits on the dark surface for contrast */
+:not(pre) > code {
+  background-color: #17171d;
+  border: 1px solid #26262e;
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
+}
+
+/* ------------------------------------------------------------------
+   3. Headings carry a primary accent bar on the LEFT of the title, so
+      a heading reads as a heading at a glance.
+   ------------------------------------------------------------------ */
+#nd-docs-layout h2,
+article h2 {
+  border-left: 3px solid transparent;
+  border-image: var(--pi-gradient) 1;
+  padding-left: 0.75rem;
+}
+
+#nd-docs-layout h3,
+article h3 {
+  border-left: 2px solid var(--color-fd-primary);
+  padding-left: 0.625rem;
+}
+
+/* Steps headings already carry a number badge; drop the extra bar there */
+#nd-docs-layout li > h3,
+article li > h3 {
+  border-left: none;
+  padding-left: 0;
+}
+
+/* Inline code also sits on the dark surface for contrast */
+:not(pre) > code {
+  background-color: #17171d;
+  border: 1px solid #26262e;
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
+}
+
 /* Code blocks wrap instead of scrolling horizontally. Fumadocs renders
    <pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line">…,
    so both the min-width and the nowrap have to be undone for wrapping to apply. */

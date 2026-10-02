@@ -1,8 +1,9 @@
 'use client';
 
+import type {ReactNode} from 'react';
 import {RootProvider} from 'fumadocs-ui/provider/next';
 import {DocsSearchDialog} from '@/components/search-dialog';
-import type {ReactNode} from 'react';
+import {AskAiFab} from '@/components/search-with-ai';
 
 export function DocsProviders({children}: { children: ReactNode }) {
     return (
@@ -11,7 +12,10 @@ export function DocsProviders({children}: { children: ReactNode }) {
                 SearchDialog: DocsSearchDialog,
             }}
         >
-            <div className="flex min-h-screen flex-col">{children}</div>
+            <div className="flex min-h-screen flex-col">
+                {children}
+                <AskAiFab/>
+            </div>
         </RootProvider>
     );
 }
