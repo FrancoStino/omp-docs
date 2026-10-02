@@ -1,26 +1,41 @@
 @import "tailwindcss";
+@import 'fumadocs-ui/css/solar.css';
+@import 'fumadocs-ui/css/preset.css';
 
+/* Pi brand tokens (same oklch as logo + omp.sh accents) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --pi-pink: oklch(0.7 0.24 340);
+  --pi-violet: oklch(0.62 0.21 295);
+  --pi-cyan: oklch(0.81 0.14 200);
+  --pi-gradient: linear-gradient(135deg, var(--pi-pink), var(--pi-violet) 50%, var(--pi-cyan));
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Pi brand: override solar primary with the logo gradient tones.
+   Light: violet (readable on light) — Dark: cyan (readable on dark, like omp.sh accent-2).
+   Solar's own primary is oklch blue (262°) which is why you kept seeing blue. */
+@theme {
+  --color-fd-primary: oklch(0.55 0.22 295);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.dark {
+  --color-fd-primary: oklch(0.85 0.16 200);
+  --color-fd-background: #09090b;
+}
+
+/* Solar also tints article/cards — keep them aligned, not blue */
+@theme inline {
+  --color-fd-ring: var(--color-fd-primary);
+}
+
+/* Active sidebar link: gradient underline */
+[data-sidebar] a[data-active='true'] {
+  background-image: var(--pi-gradient);
+  background-size: 100% 2px;
+  background-position: bottom;
+  background-repeat: no-repeat;
 }

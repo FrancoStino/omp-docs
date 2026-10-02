@@ -1,0 +1,112 @@
+name: docs-sync
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      from_sha:
+        description: 'Upstream SHA/tag to diff from (default: .docs-sync-state)'
+        required: false
+        default: ''
+      to_sha:
+        description: 'Upstream SHA/tag to diff to (default: origin/main HEAD)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve range
+        id: range
+        run: |
+          LAST="${{ inputs.from_sha }}"
+          if [ -z "$LAST" ]; then LAST="$(cat .docs-sync-state)"; fi
+          git fetch --depth=50 https://github.com/can1357/oh-my-pi.git main
+          TO="${{ inputs.to_sha }}"
+          if [ -z "$TO" ]; then TO="FETCH_HEAD"; fi
+          # Deepen until LAST is present, else fail explicit without writing state
+          for i in 1 2 3 4; do
+            git cat-file -e "$LAST" 2>/dev/null && break
+            git fetch --deepen=100 https://github.com/can1357/oh-my-pi.git main
+          done
+          git cat-file -e "$LAST" || { echo "LAST $LAST not in history after deepen; aborting"; exit 1; }
+          echo "last=$LAST" >> "$GITHUB_OUTPUT"
+          echo "to=$(git rev-parse "$TO")" >> "$GITHUB_OUTPUT"
+
+      - name: Diff path-filtered
+        id: diff
+        run: |
+          LAST="${{ steps.range.outputs.last }}"
+          TO="${{ steps.range.outputs.to }}"
+          FILTER="packages/** crates/** docs/** README.md AGENTS.md"
+          git diff --name-only "$LAST...$TO" -- $FILTER ':!**/*.test.*' ':!**/*.snap*' > changed.txt || true
+          if [ ! -s changed.txt ]; then echo "empty=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "empty=false" >> "$GITHUB_OUTPUT"
+          git diff -U3 "$LAST...$TO" -- $FILTER | head -c 200000 > code.diff
+          git log --oneline "$LAST..$TO" > commits.txt
+          {
+            echo "Upstream diff $LAST -> $TO"
+            echo
+            echo "## commits"
+            cat commits.txt
+            echo
+            echo "## changed files"
+            cat changed.txt
+          } > sync-body.md
+
+      - name: Changelog (git-cliff)
+        if: steps.diff.outputs.empty == 'false'
+        run: |
+          cargo install git-cliff --locked -q 2>/dev/null || true
+          git cliff --from "${{ steps.range.outputs.last }}" --to "${{ steps.range.outputs.to }}" > cliff.md || git log --oneline "${{ steps.range.outputs.last }}..${{ steps.range.outputs.to }}" > cliff.md
+
+      - name: Upload diff evidence
+        if: steps.diff.outputs.empty == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-evidence
+          path: |
+            code.diff
+            commits.txt
+            cliff.md
+            changed.txt
+
+      - name: Update state files
+        if: steps.diff.outputs.empty == 'false'
+        run: |
+          TO="${{ steps.range.outputs.to }}"
+          echo "$TO" > .docs-sync-state
+          printf '{"sha":"%s","date":"%s","source":"upstream-main"}\n' "$TO" "$(date -u +%F)" > public/sync-state.json
+          # NOTE: page regeneration for touched areas is manual or via Jules on the PR branch (see plan Step 7).
+          # Append cliff.md to changelog only when the touched filter includes docs/changelog sources:
+          # manual step — do not auto-edit MDX here.
+
+      - name: Open or update rolling PR
+        if: steps.diff.outputs.empty == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TO="${{ steps.range.outputs.to }}"
+          SHORT="$(echo "$TO" | cut -c1-7)"
+          BRANCH="docs/sync-$SHORT"
+          git checkout -B "$BRANCH"
+          git add .docs-sync-state public/sync-state.json
+          git -c user.name="docs-sync" -c user.email="docs-sync@users.noreply.github.com" commit -m "docs: sync upstream $SHORT" || true
+          git push -u origin "$BRANCH" --force-with-lease
+          BODY="$(cat sync-body.md)"
+          EXISTING="$(gh pr list --head "$BRANCH" --json number -q '.[0].number')"
+          if [ -n "$EXISTING" ]; then
+            gh pr edit "$EXISTING" --body "$BODY"
+          else
+            gh pr create --base main --head "$BRANCH" --title "docs: sync upstream $SHORT" --body "$BODY" --label docs/drift || gh pr create --base main --head "$BRANCH" --title "docs: sync upstream $SHORT" --body "$BODY"
+          fi

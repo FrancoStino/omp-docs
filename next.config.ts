@@ -1,7 +1,26 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
+import {createMDX} from 'fumadocs-mdx/next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    async rewrites() {
+        return [
+            {
+                source: '/docs/:slug*.md',
+                destination: '/llms.mdx/docs/:slug*/content.md',
+            },
+        ];
+    },
+    async redirects() {
+        return [
+            {
+                source: '/',
+                destination: '/docs',
+                permanent: false,
+            },
+        ];
+    },
 };
 
-export default nextConfig;
+const withMDX = createMDX();
+
+export default withMDX(nextConfig);
