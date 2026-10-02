@@ -1,0 +1,18 @@
+{
+  "title": "Extend",
+  "description": "Teach the agent new skills, tools, servers and plugins.",
+  "pages": [
+    "context-files",
+    "skills",
+    "prompt-templates",
+    "magic-keywords",
+    "hooks",
+    "custom-tools",
+    "subagent-authoring",
+    "mcp",
+    "mcp-authoring",
+    "plugins",
+    "extension-authoring",
+    "marketplace"
+  ]
+}

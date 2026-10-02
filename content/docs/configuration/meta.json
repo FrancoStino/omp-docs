@@ -1,0 +1,13 @@
+{
+  "title": "Configuration",
+  "description": "Settings, environment, credentials and appearance.",
+  "pages": [
+    "settings",
+    "env",
+    "secrets",
+    "approvals",
+    "session-format",
+    "themes",
+    "ttsr"
+  ]
+}

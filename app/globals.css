@@ -65,22 +65,17 @@
   color: oklch(0.16 0.03 295);
 }
 
-/* Black sidebar: always dark, in light and dark mode, with a hairline to the
-   content. Values live on :root so both the theme tokens and #nd-sidebar see them. */
-:root,
-.dark {
-  --color-fd-sidebar: #0b0b0e;
-  --color-fd-sidebar-foreground: #ececf1;
-  --color-fd-sidebar-border: #1c1c22;
-  --color-fd-sidebar-primary: #b786ff;
-  --color-fd-sidebar-primary-foreground: #0b0b0e;
-  --color-fd-sidebar-accent: #17171d;
-  --color-fd-sidebar-accent-foreground: #ffffff;
-}
-
+/* Sidebar follows the theme (light in light mode, dark only in dark mode).
+   The Fumadocs convention is tokens (--color-fd-*) only, no hardcoded colours. */
 #nd-sidebar {
   background-color: var(--color-fd-sidebar);
   color: var(--color-fd-sidebar-foreground);
+}
+
+.dark #nd-sidebar {
+  --color-fd-sidebar: #0b0b0e;
+  --color-fd-sidebar-foreground: #ececf1;
+  --color-fd-sidebar-border: #1c1c22;
 }
 
 #nd-sidebar a,
@@ -120,35 +115,9 @@ button[data-search-trigger] {
   min-height: 2.25rem;
 }
 
-/* ------------------------------------------------------------------
-   2. Code blocks: always near-black, in light and dark mode, so the
-      syntax colours read the same either way. Shiki's own background
-      comes from --shiki-light-bg / --shiki-dark-bg and is overridden.
-   ------------------------------------------------------------------ */
-figure.shiki,
-figure[class*='shiki'] {
-  background-color: #0b0b0e;
-  border-color: #1c1c22;
-}
-
-figure.shiki pre,
-figure[class*='shiki'] pre {
-  background-color: #0b0b0e !important;
-}
-
-figure.shiki pre code span,
-figure[class*='shiki'] pre code span {
-  /* neutral.css ships light Shiki colours first; force the dark set */
-  color: var(--shiki-dark, inherit) !important;
-}
-
-/* Inline code also sits on the dark surface for contrast */
-:not(pre) > code {
-  background-color: #17171d;
-  border: 1px solid #26262e;
-  border-radius: 5px;
-  padding: 0.1rem 0.35rem;
-}
+/* Code blocks: leave Shiki's dual-theme backgrounds alone. The theme
+   switches github-light/github-dark by itself; forcing either set in CSS
+   is what produced the black-on-black blocks in light mode. */
 
 /* ------------------------------------------------------------------
    3. Headings carry a primary accent bar on the LEFT of the title, so
@@ -174,13 +143,8 @@ article li > h3 {
   padding-left: 0;
 }
 
-/* Inline code also sits on the dark surface for contrast */
-:not(pre) > code {
-  background-color: #17171d;
-  border: 1px solid #26262e;
-  border-radius: 5px;
-  padding: 0.1rem 0.35rem;
-}
+/* Inline code: keep the theme surface. A fixed dark background is what
+   made every `code` chip black in light mode. */
 
 /* Code blocks wrap instead of scrolling horizontally. Fumadocs renders
    <pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line">…,
@@ -203,10 +167,111 @@ figure pre code > .line {
   min-width: 0;
 }
 
-/* Search term highlight uses the same ramp */
+/* ------------------------------------------------------------------
+   5. Breathing room between the MDX components the docs rely on:
+      steps, cards, accordions, callouts and tables all ran into each
+      other because Fumadocs' own spacing is tuned for prose.
+   ------------------------------------------------------------------ */
+#nd-docs-layout [class*='fd-steps'] > * + *,
+article [data-steps] > * + * {
+  margin-top: 1.75rem;
+}
+
+#nd-docs-layout h2 + [class*='fd-steps'],
+#nd-docs-layout h3 + [class*='fd-steps'] {
+  margin-top: 1.25rem;
+}
+
+#nd-docs-layout [class*='fd-steps'] + * {
+  margin-top: 2.5rem;
+}
+
+/* Cards: uniform height per row. Fumadocs' Cards grid does not stretch
+   items, so a card with title+description looks taller than a
+   title-only neighbour. Convention: only layout, no colours. */
+#nd-docs-layout [data-card],
+article [data-card] {
+  height: 100%;
+}
+
+/* Cards get a real gap and margin from the block above them */
+#nd-docs-layout [class*='fd-cards'],
+article > [class*='fd-cards'] {
+  gap: 1rem;
+  margin-block: 2rem;
+}
+
+#nd-docs-layout [class*='fd-card'] + *,
+#nd-docs-layout [class*='fd-cards'] + * {
+  margin-top: 2rem;
+}
+
+#nd-docs-layout [class*='fd-accordion'],
+#nd-docs-layout [class*='fd-accordions'] {
+  margin-block: 1.5rem;
+}
+
+#nd-docs-layout [class*='fd-callout'],
+#nd-docs-layout [data-callout] {
+  margin-block: 1.5rem;
+}
+
+#nd-docs-layout table {
+  margin-block: 1.5rem;
+}
+
+/* Step headings need air above them inside the step body */
+#nd-docs-layout [class*='fd-steps'] h3 {
+  margin-top: 0;
+}
+
+/* Sidebar header row (the <div class="flex"> with the logo title): the
+   collapse button has mb-auto, which pulls it off-centre. This is
+   Fumadocs' own sidebar/header.js markup, so target by structure. */
+#nd-sidebar > div.flex:has(> a[href='/']) {
+  align-items: center;
+}
+
+#nd-sidebar > div.flex:has(> a[href='/']) > button[class*='mb-auto'] {
+  margin-top: 0;
+  margin-bottom: 0;
+  align-self: center;
+}
+
+/* Nav row: the sidebar-collapse button carries mb-auto, which pushes it
+   off-centre. Force vertical centring on the whole row and its links. */
+#nd-nav > div,
+nav[class*='fd-nav'] > div:first-child {
+  align-items: center !important;
+}
+
+#nd-nav > div > *,
+nav[class*='fd-nav'] > div:first-child > * {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+#nd-nav button[class*='mb-auto'],
+nav button[class*='mb-auto'] {
+  margin-bottom: auto;
+  margin-top: auto;
+}
+
+/* Search hits: keep the readable highlight, no gradient fill that swallows
+   the snippet text on a dark popover. */
 mark {
-  background-image: var(--pi-gradient);
-  color: oklch(0.16 0.03 295);
+  background-color: color-mix(in oklab, var(--color-fd-primary) 28%, transparent);
+  color: inherit;
   border-radius: 3px;
-  padding-inline: 3px;
+  padding-inline: 2px;
+}
+
+/* Result rows use the popover tokens, never the code rules above. */
+[data-search-dialog] code {
+  background-color: var(--color-fd-secondary);
+  border: none;
+  padding-inline: 0.25rem;
+  padding-block: 0;
+  border-radius: 4px;
+  color: inherit;
 }

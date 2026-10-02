@@ -55,14 +55,26 @@ function Snippet({text}: { text: string }) {
 }
 
 function ResultItem({item, onClick}: { item: SearchItemType; onClick: () => void }) {
-    const {active} = useSearchList();
+    const {active, setActive} = useSearchList();
     const isActive = active === item.id;
+    // Mouse and keyboard share one highlight: hovering a row moves the
+    // selection, so the keyboard-highlighted row is never lit at the same time.
+    // No hover:bg class on purpose — the pointer already drives `active`.
+    const highlight = cn(
+        'transition-colors',
+        isActive && 'bg-fd-accent',
+    );
+
     if (item.type === 'action') {
         return (
             <button
                 type="button"
                 onClick={onClick}
-                className={cn('w-full select-none rounded-lg px-2.5 py-2 text-start text-sm', isActive && 'bg-fd-accent')}
+                onPointerMove={() => setActive(item.id)}
+                className={cn(
+                    'w-full shrink-0 select-none rounded-lg px-2.5 py-2 text-start text-sm text-fd-popover-foreground',
+                    highlight,
+                )}
             >
                 {item.node}
             </button>
@@ -72,9 +84,11 @@ function ResultItem({item, onClick}: { item: SearchItemType; onClick: () => void
         <button
             type="button"
             onClick={onClick}
+            onPointerMove={() => setActive(item.id)}
             className={cn(
-                'flex w-full select-none flex-col gap-1 overflow-hidden rounded-lg px-2.5 py-2 text-start',
-                isActive && 'bg-fd-accent',
+                'flex w-full shrink-0 select-none flex-col gap-1 overflow-hidden rounded-lg px-2.5 py-2 text-start',
+                'text-fd-popover-foreground',
+                highlight,
             )}
         >
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -89,10 +103,27 @@ function ResultItem({item, onClick}: { item: SearchItemType; onClick: () => void
     );
 }
 
+/** Orama returns the same chunk once per matching anchor; collapse those. */
+function dedupe<T extends { url?: string; content?: unknown }>(items: T[]): T[] {
+    const seen = new Set<string>();
+    const out: T[] = [];
+
+    for (const item of items) {
+        const url = typeof item.url === 'string' ? item.url : '';
+        const content = typeof item.content === 'string' ? item.content.trim().slice(0, 120) : 'node';
+        const key = `${url.split('#')[0]}|${content}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(item);
+    }
+
+    return out;
+}
+
 export function DocsSearchDialog({open, onOpenChange, dialogHandle}: SharedProps) {
     const client = useMemo(() => fetchClient({api: '/api/search'}), []);
     const {search, setSearch, query} = useDocsSearch({client, delayMs: 150});
-    const items = query.data !== 'empty' ? query.data : null;
+    const items = query.data !== 'empty' && Array.isArray(query.data) ? dedupe(query.data) : null;
 
     return (
         <SearchDialog open={open} onOpenChange={onOpenChange} search={search} onSearchChange={setSearch}

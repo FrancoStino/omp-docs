@@ -1,0 +1,11 @@
+{
+  "title": "Models & providers",
+  "description": "Pick a model, connect a provider, define what each role may do.",
+  "pages": [
+    "providers",
+    "roles",
+    "agents-and-roles",
+    "custom-models",
+    "prewalk"
+  ]
+}

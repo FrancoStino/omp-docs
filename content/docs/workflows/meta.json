@@ -1,0 +1,18 @@
+{
+  "title": "Workflows",
+  "description": "Plan, delegate, hand off, and steer a running session.",
+  "pages": [
+    "slash",
+    "plan",
+    "goal",
+    "handoff",
+    "compaction",
+    "memory",
+    "subagents",
+    "advisor",
+    "vibe",
+    "collab",
+    "security",
+    "review"
+  ]
+}

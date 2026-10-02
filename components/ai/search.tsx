@@ -12,7 +12,7 @@ import {
     useState,
 } from 'react';
 import {flushSync} from 'react-dom';
-import {Loader2, MessageCircleIcon, RefreshCw, SearchIcon, Send, X} from 'lucide-react';
+import {Loader2, MessageCircleIcon, Paperclip, Plus, RefreshCw, SearchIcon, Send, X} from 'lucide-react';
 import {cn} from '../../lib/cn';
 import {buttonVariants} from '../ui/button';
 import {useChat, type UseChatHelpers} from '@ai-sdk/react';
@@ -30,14 +30,130 @@ export type ChatUIMessage = UIMessage<
 
 export type SearchTool = Tool<{ query: string; limit: number }>;
 
-const Context = createContext<{
+const SessionContext = createContext<{
     open: boolean;
     setOpen: (open: boolean) => void;
+    sessionId: string;
+    setSessionId: (id: string) => void;
+} | null>(null);
+
+const ChatContext = createContext<{
     chat: UseChatHelpers<ChatUIMessage>;
 } | null>(null);
 
+const StoragePrefix = 'omp-ai-session:';
+const StorageIndex = 'omp-ai-sessions';
+
+interface SessionMeta {
+    id: string;
+    title: string;
+    createdAt: number;
+}
+
+function readIndex(): SessionMeta[] {
+    try {
+        return JSON.parse(localStorage.getItem(StorageIndex) ?? '[]');
+    } catch {
+        return [];
+    }
+}
+
+function writeIndex(sessions: SessionMeta[]) {
+    localStorage.setItem(StorageIndex, JSON.stringify(sessions));
+}
+
+function newSessionId(): string {
+    return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** The session the chat opens on: the most recent one, or a fresh id. */
+function currentSessionId(): string {
+    if (typeof window === 'undefined') return 'search';
+    const index = readIndex();
+    if (index.length > 0) return index[0].id;
+    const id = newSessionId();
+    writeIndex([{id, title: 'New chat', createdAt: Date.now()}]);
+    return id;
+}
+
+/** Restore messages written for a session id (or [] when none). */
+function readSession(id: string): ChatUIMessage[] {
+    try {
+        const raw = localStorage.getItem(StoragePrefix + id);
+        if (!raw) return [];
+        return JSON.parse(raw) as ChatUIMessage[];
+    } catch {
+        return [];
+    }
+}
+
+/** Persist messages after every chat update, and keep the index title in sync
+ with the first user message. */
+function usePersistSession(id: string, messages: ChatUIMessage[]) {
+    useEffect(() => {
+        try {
+            localStorage.setItem(StoragePrefix + id, JSON.stringify(messages));
+            const index = readIndex();
+            const entry = index.find((s) => s.id === id);
+            if (!entry) {
+                writeIndex([{id, title: titleOf(messages), createdAt: Date.now()}, ...index]);
+            } else if (entry.title === 'New chat' && messages.length > 0) {
+                entry.title = titleOf(messages);
+                writeIndex(index);
+            }
+        } catch {
+            // private mode / quota: chat still works, it just won't persist
+        }
+    }, [id, messages]);
+}
+
+function titleOf(messages: ChatUIMessage[]): string {
+    for (const m of messages) {
+        if (m.role !== 'user') continue;
+        for (const part of m.parts ?? []) {
+            if (part.type === 'text' && part.text.trim().length > 0) {
+                return part.text.trim().slice(0, 42) + (part.text.trim().length > 42 ? '…' : '');
+            }
+        }
+    }
+    return 'New chat';
+}
+
 export function AISearchPanelHeader({className, ...props}: ComponentProps<'div'>) {
-    const {setOpen} = useAISearchContext();
+    const {setOpen, chat, sessionId, setSessionId} = useAISearchContext();
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [sessions, setSessions] = useState<SessionMeta[]>(() => readIndex());
+    const current = sessions.find((s) => s.id === sessionId) ?? {id: sessionId, title: 'New chat'};
+
+    const refresh = () => setSessions(readIndex());
+
+    const select = (id: string) => {
+        setSessionId(id);
+        refresh();
+        setPickerOpen(false);
+    };
+
+    const createNew = () => {
+        const id = newSessionId();
+        writeIndex([{id, title: 'New chat', createdAt: Date.now()}, ...readIndex()]);
+        chat.setMessages([]);
+        select(id);
+    };
+
+    const remove = (id: string) => {
+        localStorage.removeItem(StoragePrefix + id);
+        const rest = readIndex().filter((s) => s.id !== id);
+        writeIndex(rest);
+        if (id === sessionId) {
+            if (rest.length > 0) {
+                setSessionId(rest[0].id);
+            } else {
+                createNew();
+                return;
+            }
+        }
+        refresh();
+    };
 
     return (
         <div
@@ -47,11 +163,73 @@ export function AISearchPanelHeader({className, ...props}: ComponentProps<'div'>
             )}
             {...props}
         >
-            <div className="px-3 py-2 flex-1">
-                <p className="text-sm font-medium mb-2">AI Chat</p>
-                <p className="text-xs text-fd-muted-foreground">
-                    AI can be inaccurate, please verify the answers.
+            <div className="px-3 py-2 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium">AI Chat</p>
+                    <button
+                        type="button"
+                        aria-label="Chat sessions"
+                        title={`Session: ${current.title}`}
+                        onClick={() => {
+                            refresh();
+                            setPickerOpen((v) => !v);
+                        }}
+                        className={cn(
+                            buttonVariants({size: 'icon-xs', variant: 'ghost'}),
+                            'text-fd-muted-foreground shrink-0',
+                        )}
+                    >
+                        <MessageCircleIcon/>
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="New chat"
+                        title="New chat"
+                        onClick={createNew}
+                        className={cn(
+                            buttonVariants({size: 'icon-xs', variant: 'ghost'}),
+                            'text-fd-muted-foreground shrink-0',
+                        )}
+                    >
+                        <Plus/>
+                    </button>
+                </div>
+                <p className="text-xs text-fd-muted-foreground mt-1 truncate" title={current.title}>
+                    {current.title}
                 </p>
+                {pickerOpen && (
+                    <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border bg-fd-background p-1">
+                        {sessions.length === 0 && (
+                            <p className="px-2 py-1.5 text-xs text-fd-muted-foreground">No saved chats.</p>
+                        )}
+                        {sessions.map((s) => (
+                            <div
+                                key={s.id}
+                                className={cn(
+                                    'flex items-center gap-1 rounded-md px-2 py-1.5 text-xs',
+                                    s.id === sessionId && 'bg-fd-accent',
+                                )}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => select(s.id)}
+                                    className="min-w-0 flex-1 truncate text-start"
+                                    title={s.title}
+                                >
+                                    {s.title}
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label={`Delete ${s.title}`}
+                                    onClick={() => remove(s.id)}
+                                    className="shrink-0 rounded p-0.5 text-fd-muted-foreground hover:text-fd-primary"
+                                >
+                                    <X className="size-3.5"/>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <button
@@ -115,14 +293,34 @@ export function AISearchInputActions() {
 
 const StorageKeyInput = '__ai_search_input';
 
+/** File -> data URL. Object URLs never reach the model: the SDK must
+ serialise the payload, and blob: is not http/https/data. */
+function fileToDataUrl(file: File): Promise<string> {
+    const {promise, resolve, reject} = Promise.withResolvers<string>();
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+    reader.readAsDataURL(file);
+    return promise;
+}
+
 export function AISearchInput(props: ComponentProps<'form'>) {
     const {status, sendMessage, stop} = useChatContext();
     const [input, setInput] = useState(() => localStorage.getItem(StorageKeyInput) ?? '');
+    const [files, setFiles] = useState<File[]>([]);
+    const fileRef = useRef<HTMLInputElement>(null);
     const isLoading = status === 'streaming' || status === 'submitted';
-    const onStart = (e?: SyntheticEvent) => {
+    const onStart = async (e?: SyntheticEvent) => {
         e?.preventDefault();
         const message = input.trim();
-        if (message.length === 0) return;
+        if (message.length === 0 && files.length === 0) return;
+
+        // Cap total payload: a burst of screenshots would otherwise blow the request.
+        const MAX_FILES = 4;
+        const MAX_BYTES = 3 * 1024 * 1024;
+        const picked = files.slice(0, MAX_FILES).filter((f) => f.size <= MAX_BYTES);
+
+        const urls = await Promise.all(picked.map((f) => fileToDataUrl(f)));
 
         void sendMessage({
             role: 'user',
@@ -133,13 +331,24 @@ export function AISearchInput(props: ComponentProps<'form'>) {
                         location: location.href,
                     },
                 },
-                {
-                    type: 'text',
-                    text: message,
-                },
+                ...picked.map((f, i) => ({
+                    type: 'file' as const,
+                    url: urls[i],
+                    filename: f.name,
+                    mediaType: f.type || 'application/octet-stream',
+                })),
+                ...(message.length > 0
+                    ? [
+                        {
+                            type: 'text' as const,
+                            text: message,
+                        },
+                    ]
+                    : []),
             ],
         });
         setInput('');
+        setFiles([]);
         localStorage.removeItem(StorageKeyInput);
     };
 
@@ -148,55 +357,118 @@ export function AISearchInput(props: ComponentProps<'form'>) {
     }, [isLoading]);
 
     return (
-        <form {...props} className={cn('flex items-start pe-2', props.className)} onSubmit={onStart}>
-            <Input
-                value={input}
-                placeholder={isLoading ? 'AI is answering...' : 'Ask a question'}
-                autoFocus
-                className="p-3"
-                disabled={status === 'streaming' || status === 'submitted'}
+        <form {...props} className={cn('flex flex-col', props.className)} onSubmit={onStart}>
+            <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                aria-hidden
+                tabIndex={-1}
+                className="hidden"
                 onChange={(e) => {
-                    setInput(e.target.value);
-                    localStorage.setItem(StorageKeyInput, e.target.value);
-                }}
-                onKeyDown={(event) => {
-                    // keyCode 229: Safari fires `compositionend` before this keydown, `isComposing` is already false
-                    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-                    if (!event.shiftKey && event.key === 'Enter') {
-                        onStart(event);
-                    }
+                    setFiles(Array.from(e.target.files ?? []).filter((f) => f.type.startsWith('image/')));
+                    e.target.value = '';
                 }}
             />
-            {isLoading ? (
-                <button
-                    key="bn"
-                    type="button"
-                    className={cn(
-                        buttonVariants({
-                            variant: 'secondary',
-                            className: 'transition-all rounded-full mt-2 gap-2',
-                        }),
-                    )}
-                    onClick={stop}
-                >
-                    <Loader2 className="size-4 animate-spin text-fd-muted-foreground"/>
-                    Abort Answer
-                </button>
-            ) : (
-                <button
-                    key="bn"
-                    type="submit"
-                    className={cn(
-                        buttonVariants({
-                            variant: 'default',
-                            className: 'transition-all rounded-full mt-2',
-                        }),
-                    )}
-                    disabled={input.length === 0}
-                >
-                    <Send className="size-4"/>
-                </button>
+            {files.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 px-3 pt-2">
+                    {files.map((f) => (
+                        <button
+                            key={`${f.name}-${f.size}`}
+                            type="button"
+                            onClick={() => setFiles((prev) => prev.filter((x) => x !== f))}
+                            title={`${f.name} — click to remove`}
+                            className="group relative size-12 overflow-hidden rounded-md border"
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={URL.createObjectURL(f)} alt={f.name} className="size-full object-cover"/>
+                            <span
+                                className="absolute inset-0 hidden items-center justify-center bg-black/60 group-hover:flex">
+                                <X className="size-4 text-white"/>
+                            </span>
+                        </button>
+                    ))}
+                </div>
             )}
+            <div className="flex items-start pe-2">
+                <button
+                    type="button"
+                    aria-label="Attach images"
+                    title="Attach images (needs a vision model)"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={isLoading}
+                    className={cn(
+                        buttonVariants({variant: 'ghost', size: 'icon-xs'}),
+                        'mt-2 shrink-0 text-fd-muted-foreground',
+                        files.length > 0 && 'text-fd-primary',
+                    )}
+                >
+                    <Paperclip/>
+                </button>
+                <Input
+                    value={input}
+                    placeholder={isLoading ? 'AI is answering...' : 'Ask a question, or paste text/images'}
+                    autoFocus
+                    className="p-3"
+                    disabled={status === 'streaming' || status === 'submitted'}
+                    onChange={(e) => {
+                        setInput(e.target.value);
+                        localStorage.setItem(StorageKeyInput, e.target.value);
+                    }}
+                    onPaste={(e) => {
+                        const items = Array.from(e.clipboardData?.items ?? []);
+                        const images = items.filter((i) => i.type.startsWith('image/'));
+                        if (images.length === 0) return;
+                        e.preventDefault();
+                        const picked = images
+                            .map((i) => i.getAsFile())
+                            .filter((f): f is File => f != null);
+                        setFiles((prev) => [...prev, ...picked]);
+                        const text = e.clipboardData?.getData('text/plain') ?? '';
+                        if (text.trim().length > 0) {
+                            setInput((prev) => (prev.length > 0 ? `${prev}\n${text}` : text));
+                        }
+                    }}
+                    onKeyDown={(event) => {
+                        // keyCode 229: Safari fires `compositionend` before this keydown, `isComposing` is already false
+                        if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+                        if (!event.shiftKey && event.key === 'Enter') {
+                            onStart(event);
+                        }
+                    }}
+                />
+                {isLoading ? (
+                    <button
+                        key="bn"
+                        type="button"
+                        className={cn(
+                            buttonVariants({
+                                variant: 'secondary',
+                                className: 'transition-all rounded-full mt-2 gap-2',
+                            }),
+                        )}
+                        onClick={stop}
+                    >
+                        <Loader2 className="size-4 animate-spin text-fd-muted-foreground"/>
+                        Abort Answer
+                    </button>
+                ) : (
+                    <button
+                        key="bn2"
+                        type="submit"
+                        disabled={input.length === 0 && files.length === 0}
+                        className={cn(
+                            buttonVariants({
+                                variant: 'default',
+                                className: 'transition-all rounded-full mt-2',
+                            }),
+                        )}
+                    >
+                        <Send className="size-4"/>
+                    </button>
+                )}
+            </div>
         </form>
     );
 }
@@ -265,16 +537,62 @@ function Input(props: ComponentProps<'textarea'>) {
 
 const roleName: Record<string, string> = {
     user: 'you',
-    assistant: 'fumadocs',
+    assistant: 'omp',
 };
+
+/** One summary row for all search calls of a message. The model may call
+ the tool up to 5 times per answer; rendering a box per call was the
+ repeated `0/1/0 search results` noise in the chat. */
+function SearchCallsSummary({calls}: { calls: UIToolInvocation<SearchTool>[] }) {
+    if (calls.length === 0) return null;
+
+    const failed = calls.find((c) => c.state === 'output-error' || c.state === 'output-denied');
+    const pending = calls.some((c) => !c.output && !failed);
+    if (failed) {
+        return (
+            <div
+                className="flex flex-row gap-2 items-center mt-3 rounded-lg border bg-fd-secondary text-fd-muted-foreground text-xs p-2">
+                <SearchIcon className="size-4"/>
+                <p className="text-fd-error">{failed.errorText ?? 'Failed to search'}</p>
+            </div>
+        );
+    }
+    if (pending) {
+        return (
+            <div
+                className="flex flex-row gap-2 items-center mt-3 rounded-lg border bg-fd-secondary text-fd-muted-foreground text-xs p-2">
+                <SearchIcon className="size-4"/>
+                <p>Searching…</p>
+            </div>
+        );
+    }
+    const total = calls.reduce(
+        (n, c) => n + (Array.isArray(c.output) ? c.output.length : typeof c.output === 'string' ? 1 : 0),
+        0,
+    );
+    return (
+        <div
+            className="flex flex-row gap-2 items-center mt-3 rounded-lg border bg-fd-secondary text-fd-muted-foreground text-xs p-2">
+            <SearchIcon className="size-4"/>
+            <p>{`${total} search result${total === 1 ? '' : 's'}`}</p>
+        </div>
+    );
+}
 
 function Message({message, ...props}: { message: ChatUIMessage } & ComponentProps<'div'>) {
     let markdown = '';
     const searchCalls: UIToolInvocation<SearchTool>[] = [];
+    const attachments: { url: string; filename?: string; mediaType?: string }[] = [];
 
     for (const part of message.parts ?? []) {
         if (part.type === 'text') {
             markdown += part.text;
+            continue;
+        }
+
+        if (part.type === 'file') {
+            const f = part as unknown as { url?: string; filename?: string; mediaType?: string };
+            if (typeof f.url === 'string') attachments.push({url: f.url, filename: f.filename, mediaType: f.mediaType});
             continue;
         }
 
@@ -301,37 +619,71 @@ function Message({message, ...props}: { message: ChatUIMessage } & ComponentProp
                 <Markdown text={markdown}/>
             </div>
 
-            {searchCalls.map((call) => {
-                return (
-                    <div
-                        key={call.toolCallId}
-                        className="flex flex-row gap-2 items-center mt-3 rounded-lg border bg-fd-secondary text-fd-muted-foreground text-xs p-2"
-                    >
-                        <SearchIcon className="size-4"/>
-                        {call.state === 'output-error' || call.state === 'output-denied' ? (
-                            <p className="text-fd-error">{call.errorText ?? 'Failed to search'}</p>
+            {attachments.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                    {attachments.map((a, i) =>
+                        a.mediaType?.startsWith('image/') || /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(a.filename ?? '') ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                key={`${a.filename ?? 'file'}-${i}`}
+                                src={a.url}
+                                alt={a.filename ?? 'attached image'}
+                                className="max-h-40 max-w-full rounded-lg border object-contain"
+                            />
                         ) : (
-                            <p>{!call.output ? 'Searching…' : `${call.output.length} search results`}</p>
-                        )}
-                    </div>
-                );
-            })}
+                            <a
+                                key={`${a.filename ?? 'file'}-${i}`}
+                                href={a.url}
+                                download={a.filename}
+                                className="text-xs text-fd-primary underline"
+                            >
+                                {a.filename ?? 'attached file'}
+                            </a>
+                        ),
+                    )}
+                </div>
+            )}
+
+            <SearchCallsSummary calls={searchCalls}/>
         </div>
     );
 }
 
 export function AISearch({children}: { children: ReactNode }) {
     const [open, setOpen] = useState(false);
+    const [sessionId, setSessionId] = useState(() => currentSessionId());
+
+    // One Inner (and one useChat instance) per session id: remounting on
+    // change keeps the message list aligned with the selected session
+    // instead of leaking messages from the previous one.
+    return (
+        <SessionContext value={useMemo(() => ({open, setOpen, sessionId, setSessionId}), [open, sessionId])}>
+            <Inner key={sessionId} sessionId={sessionId}>
+                {children}
+            </Inner>
+        </SessionContext>
+    );
+}
+
+/** Owns the useChat instance for exactly one session. */
+function Inner({children, sessionId}: { children: ReactNode; sessionId: string }) {
     const chat = useChat<ChatUIMessage>({
-        id: 'search',
+        id: sessionId,
         transport: new DefaultChatTransport({
             api: '/api/chat',
         }),
     });
 
-    return (
-        <Context value={useMemo(() => ({chat, open, setOpen}), [chat, open])}>{children}</Context>
-    );
+    // `messages` is not a valid useChat option: after mount, the stored
+    // messages for a session are pushed in once.
+    useEffect(() => {
+        chat.setMessages(readSession(sessionId));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionId]);
+
+    usePersistSession(sessionId, chat.messages);
+
+    return <ChatContext value={useMemo(() => ({chat}), [chat])}>{children}</ChatContext>;
 }
 
 export function AISearchTrigger({
@@ -370,25 +722,29 @@ export function AISearchPanel() {
         <>
             {actualOpen && (
                 <div
-                    className="fixed inset-0 z-50 bg-fd-overlay backdrop-blur-xs animate-fd-fade-in"
+                    className={cn(
+                        'fixed inset-0 z-40 backdrop-blur-xs bg-fd-overlay lg:hidden',
+                        open ? 'animate-fd-fade-in' : 'animate-fd-fade-out',
+                    )}
                     onClick={() => setOpen(false)}
+                    onAnimationEnd={() => {
+                        if (!open) flushSync(() => setActualOpen(false));
+                    }}
                 />
             )}
             {actualOpen && (
                 <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Ask AI"
                     className={cn(
-                        'fixed inset-x-2 inset-y-4 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden',
-                        'rounded-2xl border bg-fd-card text-fd-card-foreground shadow-2xl',
-                        open ? 'animate-fd-dialog-in' : 'animate-fd-dialog-out',
+                        'overflow-hidden z-40 bg-fd-card text-fd-card-foreground [--ai-chat-width:400px] 2xl:[--ai-chat-width:460px]',
+                        'max-lg:fixed max-lg:inset-x-2 max-lg:inset-y-4 max-lg:border max-lg:rounded-2xl max-lg:shadow-xl',
+                        'lg:sticky lg:top-0 lg:h-dvh lg:border-s lg:ms-auto lg:max-w-(--ai-chat-width) lg:in-[#nd-docs-layout]:[grid-area:toc]',
+                        open ? 'animate-fd-fade-in' : 'animate-fd-fade-out',
                     )}
                     onAnimationEnd={() => {
                         if (!open) flushSync(() => setActualOpen(false));
                     }}
                 >
-                    <div className="flex size-full flex-col p-2">
+                    <div className="flex size-full flex-col p-2 lg:w-(--ai-chat-width)">
                         <AISearchPanelHeader/>
                         <AISearchPanelList className="flex-1"/>
                         <div
@@ -466,9 +822,11 @@ export function useHotKey() {
 }
 
 export function useAISearchContext() {
-    return use(Context)!;
+    const session = use(SessionContext)!;
+    const chat = use(ChatContext)!;
+    return {...session, ...chat};
 }
 
 function useChatContext() {
-    return use(Context)!.chat;
+    return use(ChatContext)!.chat;
 }

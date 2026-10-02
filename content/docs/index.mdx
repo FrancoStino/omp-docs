@@ -9,7 +9,7 @@ description: "Bring a real software task to your terminal. omp can inspect the r
 
 ## Start with a real task
 
-If this is your first visit, begin with the [Quickstart](quickstart). It covers installation and provider authentication. Then open a project and start an interactive session:
+If this is your first visit, begin with the [Quickstart](/get-started/quickstart). It covers installation and provider authentication. Then open a project and start an interactive session:
 
 <Steps>
   <Step>
@@ -33,13 +33,13 @@ If this is your first visit, begin with the [Quickstart](quickstart). It covers 
 </Steps>
 
 <Cards>
-  <Card title="Quickstart" description="Install omp and run your first session" href="quickstart" />
-  <Card title="Providers" description="Connect models, API keys, and OAuth" href="providers" />
-  <Card title="Sessions" description="Resume, branch, and share work" href="sessions" />
-  <Card title="Slash commands" description="Control a running session" href="slash" />
+  <Card title="Quickstart" href="/get-started/quickstart">Install omp and run your first session</Card>
+  <Card title="Providers" href="/models/providers">Connect models, API keys, and OAuth</Card>
+  <Card title="Sessions" href="/get-started/sessions">Resume, branch, and share work</Card>
+  <Card title="Slash commands" href="/workflows/slash">Control a running session</Card>
 </Cards>
 
-A good first task has a clear goal and a way to verify it. If you only want an explanation, say “investigate, but do not edit.” For a large or risky change, start with [Plan mode](plan) so you can review the approach before implementation.
+A good first task has a clear goal and a way to verify it. If you only want an explanation, say “investigate, but do not edit.” For a large or risky change, start with [Plan mode](/workflows/plan) so you can review the approach before implementation.
 
 ## Why use omp
 
@@ -54,49 +54,49 @@ It is a good fit for developers who:
 - want one workflow that can grow from a single agent to planning, parallel work, and shared sessions.
 
 > [!CAUTION]
-> omp can modify files and run commands in your environment, so review its work as you would a teammate's change and use [approval controls](approvals) for sensitive projects. Prompts and relevant context are sent to the model provider you select; integrations may also contact their corresponding services.
+> omp can modify files and run commands in your environment, so review its work as you would a teammate's change and use [approval controls](/configuration/approvals) for sensitive projects. Prompts and relevant context are sent to the model provider you select; integrations may also contact their corresponding services.
 
 ## What you notice as a user
 
 <Tabs items={['One loop', 'Your models', 'Resume later', 'Plan first', 'Parallel work', 'Extend it']}>
   <Tab value="One loop">
-    Ask for an outcome rather than copying code into a browser. omp can combine repository search, edits, commands, [language-aware code intelligence](code-intelligence), [live debugging](debugging), [browser work](web), and [GitHub context](github) when the task calls for them. Its work remains visible in the session.
+    Ask for an outcome rather than copying code into a browser. omp can combine repository search, edits, commands, [language-aware code intelligence](/code-and-files/code-intelligence), [live debugging](/code-and-files/debugging), [browser work](/code-and-files/web), and [GitHub context](/code-and-files/github) when the task calls for them. Its work remains visible in the session.
   </Tab>
   <Tab value="Your models">
-    Connect API-key, OAuth, subscription, gateway, or local providers, then choose models for everyday work, fast tasks, deeper reasoning, and planning. Start with [Providers](providers); use [Settings](settings) when you want to tune routing or behavior.
+    Connect API-key, OAuth, subscription, gateway, or local providers, then choose models for everyday work, fast tasks, deeper reasoning, and planning. Start with [Providers](/models/providers); use [Settings](/configuration/settings) when you want to tune routing or behavior.
   </Tab>
   <Tab value="Resume later">
-    Sessions are saved locally by default. Resume earlier work, branch when you want to try a different direction without discarding history, or share a session when someone else needs the context. See [Sessions](sessions) for the user controls.
+    Sessions are saved locally by default. Resume earlier work, branch when you want to try a different direction without discarding history, or share a session when someone else needs the context. See [Sessions](/get-started/sessions) for the user controls.
   </Tab>
   <Tab value="Plan first">
-    Run `/plan` for a separate planning turn, refine the proposal, and decide when to execute it. This is useful for migrations, architectural changes, and work where the order of operations matters. See [Plan mode](plan).
+    Run `/plan` for a separate planning turn, refine the proposal, and decide when to execute it. This is useful for migrations, architectural changes, and work where the order of operations matters. See [Plan mode](/workflows/plan).
   </Tab>
   <Tab value="Parallel work">
-    Ask omp to delegate independent parts of a task to subagents, such as auditing several packages at once. You can watch their progress and steer them while they work. See [Subagents](subagents).
+    Ask omp to delegate independent parts of a task to subagents, such as auditing several packages at once. You can watch their progress and steer them while they work. See [Subagents](/workflows/subagents).
   </Tab>
   <Tab value="Extend it">
-    Project rules and [skills](skills) teach omp how your team works. Extensions and [MCP servers](mcp) can add public integrations when the built-in capabilities are not enough.
+    Project rules and [skills](/extend/skills) teach omp how your team works. Extensions and [MCP servers](/extend/mcp) can add public integrations when the built-in capabilities are not enough.
   </Tab>
 </Tabs>
 
 ## A practical learning path
 
-1. **Get one prompt working:** [Quickstart](quickstart) covers installation, authentication, terminal setup, and your first session.
-2. **Learn the interactive controls:** [Using omp](using) explains the screen, editor, message queue, and one-shot mode.
-3. **Keep useful work:** [Sessions](sessions) covers resume, branch, fork, export, and sharing.
+1. **Get one prompt working:** [Quickstart](/get-started/quickstart) covers installation, authentication, terminal setup, and your first session.
+2. **Learn the interactive controls:** [Using omp](/get-started/using) explains the screen, editor, message queue, and one-shot mode.
+3. **Keep useful work:** [Sessions](/get-started/sessions) covers resume, branch, fork, export, and sharing.
 4. **Choose the next guide for your goal:**
 
 | You want to… | Go to… |
 | --- | --- |
-| Control a running session efficiently | [Slash commands](slash) and [Keybindings](keybindings) |
-| Connect or change models | [Providers](providers) and [Settings](settings) |
-| Design a large change before touching code | [Plan mode](plan) |
-| Investigate symbols, diagnostics, or a live process | [Code intelligence](code-intelligence) and [Debugging](debugging) |
-| Split independent work or share a live session | [Subagents](subagents) and [Collab](collab) |
-| Use omp from scripts or another program | [CLI reference](cli), [RPC mode](rpc), or the [SDK](sdk) |
-| Add team instructions or integrations | [Skills](skills), [MCP](mcp), and [authoring extensions](extension-authoring) |
+| Control a running session efficiently | [Slash commands](/workflows/slash) and [Keybindings](/reference/keybindings) |
+| Connect or change models | [Providers](/models/providers) and [Settings](/configuration/settings) |
+| Design a large change before touching code | [Plan mode](/workflows/plan) |
+| Investigate symbols, diagnostics, or a live process | [Code intelligence](/code-and-files/code-intelligence) and [Debugging](/code-and-files/debugging) |
+| Split independent work or share a live session | [Subagents](/workflows/subagents) and [Collab](/workflows/collab) |
+| Use omp from scripts or another program | [CLI reference](/reference/cli), [RPC mode](/reference/rpc), or the [SDK](/reference/sdk) |
+| Add team instructions or integrations | [Skills](/extend/skills), [MCP](/extend/mcp), and [authoring extensions](/extend/extension-authoring) |
 
-Not sure which branch to take? Complete the [Quickstart](quickstart), run one small task in a repository you know, and continue with [Using omp](using).
+Not sure which branch to take? Complete the [Quickstart](/get-started/quickstart), run one small task in a repository you know, and continue with [Using omp](/get-started/using).
 
 ---
 

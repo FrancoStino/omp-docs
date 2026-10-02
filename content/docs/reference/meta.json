@@ -1,0 +1,12 @@
+{
+  "title": "Reference",
+  "description": "Command, key and protocol references.",
+  "pages": [
+    "cli",
+    "keybindings",
+    "sdk",
+    "rpc",
+    "acp",
+    "tools"
+  ]
+}

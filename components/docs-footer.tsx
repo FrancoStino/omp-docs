@@ -11,19 +11,19 @@ const CATEGORY_LINKS = [
 ] as const;
 
 const HREFS: Record<string, string> = {
-    Quickstart: '/quickstart',
-    'Using omp': '/using',
-    Sessions: '/sessions',
-    Providers: '/providers',
-    Settings: '/settings',
-    'Environment variables': '/env',
-    MCP: '/mcp',
-    Skills: '/skills',
-    Plugins: '/plugins',
-    Extensions: '/extension-authoring',
-    'Slash commands': '/slash',
-    CLI: '/cli',
-    Keybindings: '/keybindings',
+    Quickstart: '/get-started/quickstart',
+    'Using omp': '/get-started/using',
+    Sessions: '/get-started/sessions',
+    Providers: '/models/providers',
+    Settings: '/configuration/settings',
+    'Environment variables': '/configuration/env',
+    MCP: '/extend/mcp',
+    Skills: '/extend/skills',
+    Plugins: '/extend/plugins',
+    Extensions: '/extend/extension-authoring',
+    'Slash commands': '/workflows/slash',
+    CLI: '/reference/cli',
+    Keybindings: '/reference/keybindings',
 };
 
 export function DocsFooter({items, ...props}: FooterProps) {

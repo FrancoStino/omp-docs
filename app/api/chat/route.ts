@@ -1,11 +1,11 @@
 import {createOpenAICompatible} from '@ai-sdk/openai-compatible';
 import {
-  convertToModelMessages,
-  createUIMessageStreamResponse,
-  stepCountIs,
-  streamText,
-  tool,
-  toUIMessageStream,
+    convertToModelMessages,
+    createUIMessageStreamResponse,
+    stepCountIs,
+    streamText,
+    tool,
+    toUIMessageStream,
 } from 'ai';
 import {z} from 'zod';
 import {source} from '@/lib/source';
@@ -80,12 +80,17 @@ function resolveModel() {
     return provider.chatModel(modelId);
 }
 
-/** System prompt, you can update it to provide more specific information */
+/** System prompt: identity first, then the search-first rule.
+ The default template only said "a documentation site" with no product
+ identity, so the model treated "omp" as a generic editor and guessed
+ instead of reading the docs (visible as `0 search results` in answers). */
 const systemPrompt = [
-    'You are an AI assistant for a documentation site.',
-    'Use the `search` tool to retrieve relevant docs context before answering when needed.',
-    'The `search` tool returns raw JSON results from documentation. Use those results to ground your answer and cite sources as markdown links using the document `url` field when available.',
-    'If you cannot find the answer in search results, say you do not know and suggest a better search query.',
+    'You are the assistant for OMP Docs, the documentation of omp — a terminal-first AI coding agent (repo can1357/oh-my-pi) that works inside the user\'s project: it inspects code, edits files, runs commands and keeps resumable sessions.',
+    'When the user writes "omp" they ALWAYS mean this coding agent, never a generic editor or an unknown tool. Never ask what OMP is, and never suggest generic fixes (file pickers, permissions, resizing) without checking the docs first.',
+    'On EVERY user message you MUST call the `search` tool at least once before answering, even when the question looks generic. The docs are the only source of truth here.',
+    'Each message may carry a [Client Context: {"location": "..."}] tag: that is the docs page the user is currently reading. Prefer results from that page and its neighbours when relevant.',
+    'The `search` tool returns raw JSON results from documentation (each hit has a `url` like /get-started/quickstart, /workflows/sessions, /models/providers). Use those results to ground your answer and cite sources as markdown links using the document `url` field when available.',
+    'If the search results contain nothing relevant, say exactly what you searched, state that the docs do not cover it, and suggest a better search query. Do not invent behaviour the docs do not describe.',
 ].join('\n');
 
 const rateLimits: Record<string, { count: number; reset: number }> = {};
@@ -148,7 +153,7 @@ const searchTool = tool({
     description: 'Search the docs content and return raw JSON results.',
     inputSchema: z.object({
         query: z.string(),
-        limit: z.number().int().min(1).max(100).default(10),
+        limit: z.number().int().min(1).max(100).default(30),
     }),
     async execute({query, limit}) {
         const search = await searchServer;

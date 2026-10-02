@@ -1,0 +1,11 @@
+{
+  "title": "Get started",
+  "description": "Install, run your first session, pick up where you left off.",
+  "pages": [
+    "quickstart",
+    "using",
+    "modes",
+    "sessions",
+    "session-tree"
+  ]
+}

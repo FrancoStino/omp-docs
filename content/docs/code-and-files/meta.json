@@ -1,0 +1,14 @@
+{
+  "title": "Code & files",
+  "description": "Reading, editing, reviewing and verifying the repository.",
+  "pages": [
+    "files",
+    "code-intelligence",
+    "editing",
+    "debugging",
+    "commit",
+    "web",
+    "computer",
+    "github"
+  ]
+}

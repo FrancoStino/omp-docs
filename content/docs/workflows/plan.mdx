@@ -1,0 +1,175 @@
+---
+title: "Plan mode"
+description: "Explore a change without modifying the project, review the proposed approach, then choose exactly how omp should hand it to an implementation model."
+---
+
+## Plan before omp changes anything
+
+Use plan mode when the hard part is deciding **what** to change: a cross-file refactor, an unfamiliar codebase, a migration with ordering constraints, or a design you want to review before implementation. During planning, omp can inspect the project and investigate assumptions, but its planning turn is read-only with respect to your working tree and system. The draft is kept as a session artifact; leaving without approval does not apply it.
+
+Start with the goal and the constraints that would change the design:
+
+```text
+/plan Replace the in-memory job queue with Postgres. Preserve the public API, include a rollback path, and call out every migration step.
+```
+
+You can also type `/plan` with no prompt, or press the default `Alt`+`Shift`+`P` chord, and then enter your request. The status line shows **Plan**, omp switches to the configured `plan` model, and the next turn explores and drafts rather than implements.
+
+<Callout type="info" title="When to skip planning">
+  For a tiny, well-understood edit, ordinary mode is faster. Planning adds another model turn and consumes context before execution begins.
+</Callout>
+
+## From request to reviewed plan
+
+<Steps>
+  <Step>
+    ### Describe the outcome
+
+    Include non-negotiable behavior, relevant files or systems, and how you will judge success.
+  </Step>
+  <Step>
+    ### Let omp investigate
+
+    It reads the code and other available sources, checks assumptions, and builds a Markdown plan without changing the project.
+  </Step>
+  <Step>
+    ### Review the draft
+
+    When the plan is ready, omp opens the full-screen **Plan Review** surface. You can also reopen the newest draft at any time with `/plan-review`.
+  </Step>
+  <Step>
+    ### Refine or approve
+
+    Add feedback, remove unwanted sections, or choose how implementation should inherit the planning conversation.
+  </Step>
+</Steps>
+
+A useful follow-up is concrete rather than general:
+
+```text
+Keep the database schema, but revise the rollout so old and new workers can run together for one deploy.
+```
+
+## Review and approval choices
+
+The approval choice controls both execution and context. It does not change the contents of the approved plan.
+
+| Choice | What happens | Use it when |
+| --- | --- | --- |
+| **Approve and execute** | Exits plan mode, starts a fresh session, and gives the approved plan to the implementation model. The earlier transcript, including the planning discussion, is not carried into the new context. | The plan is self-contained, or you want the most context space for implementation. |
+| **Approve and compact context** | Exits plan mode, compacts the current conversation into a summary focused on the approved plan, and then implements in the current session. | Some exploration matters, but the full transcript would be expensive or distracting. |
+| **Approve and keep context** | Exits plan mode and implements in the current session with the full planning conversation intact. The option displays approximate usage against the execution model's context window. | Decisions depend on nuance that did not make it into the plan. |
+| **Refine plan** | Sends your review annotations back as a planning turn. If you did not add annotations, the overlay closes and omp prompts you to enter a follow-up. Nothing executes. | The approach, ordering, or scope still needs work. |
+| **Save and quit** | Prompts for a destination, writes the plan there, exits plan mode, and starts a new blank session without executing it. Relative paths resolve from the current working directory. | You want a durable plan for a later session, review, or handoff. |
+
+**Approve and keep context** is unavailable only when usage is already above 95% of the execution model's context window. Choose compact or fresh execution instead. If the session has no usable context estimate, the option remains available without a usage figure.
+
+Approval starts implementation immediately. If the session has no name yet, omp derives one from the plan title; a name you set yourself is preserved.
+
+### Choose the implementation model
+
+When at least two configured role models are available, Plan Review shows a **continue with** selector above the choices. It starts on the `default` role. Use `Left`/`Right` while the actions region is focused to choose another role before approving. This selection controls implementation, not the planner that produced the draft.
+
+If only one role model resolves, the selector is hidden and omp restores the model that was active before plan mode.
+
+## Work in Plan Review
+
+The footer always shows the controls available in the focused region.
+
+| Control | Result |
+| --- | --- |
+| `Up`/`Down`, `Enter` | Select and confirm an action. |
+| `Tab` / `Shift`+`Tab` | Move among contents, plan body, and actions. |
+| `Page Up`/`Page Down`, `g`/`G` | Move through a long plan or jump to its beginning/end. |
+| `a` | Annotate the focused section or visible plan line; the notes become refinement feedback. |
+| `d` / `Delete` | Remove the selected section in the contents sidebar. |
+| `u` | Undo the most recent section edit or annotation. |
+| `c` | Copy the current plan to the clipboard. |
+| Your external-editor key | Edit the plan in `$VISUAL` or `$EDITOR`. |
+| `Escape` | Dismiss review without approving or leaving plan mode. |
+
+The contents sidebar appears only when the terminal is wide enough and the plan has at least two headings. Section delete and section-level annotation controls therefore may not be visible in a narrow terminal; you can still refine with a normal follow-up prompt or use an external editor.
+
+Section deletion, undo, and external-editor changes update the session draft as you work. `Escape` dismisses the overlay but does not roll those edits back. Run `/plan-review` to bring back the newest plan draft. See [Keybindings](/reference/keybindings) to inspect or change the plan toggle and external-editor chords.
+
+## Pause, resume, or leave
+
+`/plan` is a stateful toggle:
+
+1. While plan mode is active, run `/plan` again to leave without approval. If a non-empty draft exists, omp asks you to confirm. The status changes to **Plan paused**, normal tools and the pre-plan model are restored, and nothing executes.
+2. While paused, run `/plan <follow-up>` to re-enter plan mode and submit that follow-up immediately.
+3. While paused, run `/plan` with no prompt once more to turn plan mode fully off and clear the paused state.
+
+Pressing `Escape` in Plan Review is different: it only closes the review surface. Plan mode remains active, so you can keep discussing the draft or reopen it with `/plan-review`.
+
+<Callout type="warn" title="Mutually exclusive modes">
+  Plan mode cannot run at the same time as goal mode or vibe mode. Exit the active or paused conflicting mode before entering plan mode.
+</Callout>
+
+## Planner model and settings
+
+Plan mode is enabled by default and does not start automatically. It temporarily switches the session to the `plan` role on entry, including that role's configured thinking level, and restores the previous model when you leave unless you choose an implementation role in Plan Review.
+
+A minimal persistent setup in [`config.yml`](/configuration/settings) is:
+
+```yaml
+plan:
+  enabled: true
+  defaultOnStartup: false
+
+modelRoles:
+  plan: anthropic/claude-opus-4-5:high
+```
+
+| Setting or override | Purpose | Default |
+| --- | --- | --- |
+| `plan.enabled` | Makes `/plan` and plan mode available. | `true` |
+| `plan.defaultOnStartup` | Opens each fresh interactive session in plan mode. Existing/resumed conversations are not forced into it. | `false` |
+| `modelRoles.plan` | Persistent model and optional thinking level used while planning. | Not set; omp keeps the current model |
+| `omp --plan <model-id>` | Selects the plan-role model for this launch. It does **not** enter plan mode; use `/plan` after launch. | — |
+| `PI_PLAN_MODEL=<model-id>` | Selects the plan-role model for the process. `--plan` takes precedence. | — |
+| `cycleOrder` and `modelRoles` | Determine the role models offered by the review-time **continue with** selector. | `smol`, `default`, `slow` |
+
+If you change the `plan` role while plan mode is active, omp applies the new role model at the next safe turn boundary.
+
+## Limitations and troubleshooting
+
+<Accordions>
+  <Accordion title="Plan mode is disabled">
+    Set `plan.enabled: true` in the active settings scope, then run `/plan` again.
+</Accordion>
+  <Accordion title="Exit goal mode first or Exit vibe mode first">
+    The modes are mutually exclusive. A paused plan also must be turned fully off before entering goal mode.
+</Accordion>
+  <Accordion title="No plan to review yet">
+    The planning turn has not produced a draft. Ask omp to finish the plan, then use `/plan-review`.
+</Accordion>
+  <Accordion title="Keep-context is dimmed">
+    The conversation is above 95% of the execution model's context window. Use compact or fresh execution.
+</Accordion>
+  <Accordion title="Compaction was cancelled after approval">
+    omp leaves the plan approved but does not dispatch implementation. Submit another turn to continue from the approved plan.
+</Accordion>
+  <Accordion title="The external editor does not open">
+    Set `$VISUAL` or `$EDITOR`; otherwise use annotations and follow-up prompts in omp.
+</Accordion>
+  <Accordion title="Startup plan mode does not activate in --print or JSON output">
+    `plan.defaultOnStartup` is interactive-only because headless runs have no review surface. `--plan-yolo` is the separate headless flow; it auto-approves and therefore intentionally skips all human review choices documented above.
+</Accordion>
+  <Accordion title="Planning is read-only for omp, not for you">
+    Shell commands you run yourself can still change files or system state.
+</Accordion>
+</Accordions>
+
+## Related
+
+<Cards>
+  <Card title="Goal mode" description="Durable objectives with token budgets and supervision" href="/workflows/goal" />
+  <Card title="Run modes" description="Interactive, one-shot, and turn controls overview" href="/get-started/modes" />
+  <Card title="Keybindings" description="Key chords and shortcuts for plan review and navigation" href="/reference/keybindings" />
+  <Card title="Settings" description="Persistent configuration and model role definitions" href="/configuration/settings" />
+</Cards>
+
+---
+
+Source: [omp.sh](https://omp.sh/docs/plan) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
