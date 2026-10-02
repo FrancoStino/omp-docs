@@ -5,25 +5,41 @@ description: "Your work is saved automatically. Resume it by project, split off 
 
 ## Your work saves automatically
 
-Start omp normally and work:
+<Callout type="info" title="No save button">
+  There is no Save command. omp records completed messages and tool activity automatically. Text still streaming is not committed until the response finishes.
+</Callout>
 
-```sh
-cd ~/work/api
-omp
-```
+<Cards>
+  <Card title="Quickstart" description="Install omp and run your first session" href="quickstart" />
+  <Card title="Session tree" description="Navigate, branch, and inspect conversation history" href="session-tree" />
+  <Card title="Session format" description="The public on-disk JSONL format for integrations" href="session-format" />
+  <Card title="CLI reference" description="Command-line flags for resume, fork, and export" href="cli" />
+</Cards>
 
-There is no Save command. omp records completed messages and tool activity in a session associated with the working directory. Quit and come back later with:
+<Steps>
+  <Step>
+    ### Work normally
 
-```sh
-cd ~/work/api
-omp -c
-```
+    ```sh
+    cd ~/work/api
+    omp
+    ```
+  </Step>
+  <Step>
+    ### Quit and come back later
 
-`-c` continues this terminal's last session in the current directory. If that terminal breadcrumb is unavailable, omp uses the most recently modified session for the directory; if none exists, it starts a new one.
+    ```sh
+    cd ~/work/api
+    omp -c
+    ```
 
-Saving happens as entries complete. Text that is still streaming is not committed until the response finishes, so a hard crash can lose the partial response at the end while preserving the completed work before it. See [Crash recovery](#crash-recovery) for the safe way to continue.
+    `-c` continues this terminal's last session in the current directory. If that terminal breadcrumb is unavailable, omp uses the most recently modified session for the directory; if none exists, it starts a new one.
+  </Step>
+</Steps>
 
-If you never want a local session record, launch with `omp --no-session`. That run cannot be resumed, deleted, or forked as a saved session. An explicit export or share still creates or uploads a separate copy.
+<Callout type="warn" title="Ephemeral sessions">
+  Launching with `omp --no-session` prevents writing a session record to disk. That run cannot be resumed, deleted, or forked later. An explicit export or share still creates or uploads a separate copy.
+</Callout>
 
 ## Start, continue, or choose a session
 
@@ -87,7 +103,9 @@ Choose the command by what should happen next:
 | `/drop` | Deletes the current session and immediately starts a new one |
 | `/new` | Keeps the current session and starts a new one |
 
-Deletion is destructive. Export or copy the JSONL file shown by `/session info` first if you might need it later.
+<Callout type="error" title="Deletion is destructive">
+  Export or copy the JSONL file shown by `/session info` first if you might need it later. Deleting a session permanently removes its history and local artifacts.
+</Callout>
 
 ## Branch or fork?
 
@@ -112,7 +130,7 @@ omp --fork <session-id>
 omp --fork ./received-session.jsonl
 ```
 
-Use `/tree` to switch among paths kept inside one session. [Session tree](/docs/session-tree) explains navigation, labels, active paths, and exactly what branch and fork retain.
+Use `/tree` to switch among paths kept inside one session. [Session tree](session-tree) explains navigation, labels, active paths, and exactly what branch and fork retain.
 
 ## Export, share, and import
 
@@ -141,7 +159,11 @@ Run `/share` in the session, or share an existing saved session from the shell:
 omp share <session-id-or-path>
 ```
 
-The default flow encrypts the session snapshot in your client and uploads the encrypted blob. The decryption key is in the URL fragment and is not sent to the storage server. Secret redaction is enabled by default for configured secrets, but it is not a substitute for reviewing what you send: anyone with the complete link can read the snapshot. Large shares may be trimmed to fit the service limit, and a configured custom share handler may use a different destination and privacy model.
+The default flow encrypts the session snapshot in your client and uploads the encrypted blob. The decryption key is in the URL fragment and is not sent to the storage server.
+
+<Callout type="warn" title="Shared link privacy">
+  The decryption key is in the URL fragment. Anyone with the complete link can read the snapshot. Large shares may be trimmed to fit the service limit, and a configured custom share handler may use a different destination and privacy model.
+</Callout>
 
 Use `/handoff [focus]` before sharing when another person needs a concise statement of current state and next steps.
 
@@ -154,7 +176,7 @@ cd ~/work/api
 omp --fork ./received-session.jsonl
 ```
 
-This creates a new local session and leaves the received file unchanged. `omp -r./received-session.jsonl` instead opens that exact file and adopts its recorded working directory when it still exists.
+This creates a new local session and leaves the received file unchanged. `omp -r ./received-session.jsonl` instead opens that exact file and adopts its recorded working directory when it still exists.
 
 omp can also import local Claude Code or Codex history into a fresh omp session:
 
@@ -165,7 +187,7 @@ omp --from-codex
 
 Each command opens a source-specific picker. From an existing omp session, `/resume @claude` and `/resume @codex` open the same import choices.
 
-For tools that need the public JSONL structure rather than the product workflow, see [Session format](/docs/session-format).
+For tools that need the public JSONL structure rather than the product workflow, see [Session format](session-format).
 
 ## Profiles, locations, and privacy
 
@@ -174,7 +196,18 @@ Sessions are scoped in two layers:
 1. **Profile.** `omp --profile work` uses isolated settings, authentication, caches, and sessions. A resume picker only sees the active profile.
 2. **Working directory.** Inside a profile, omp groups sessions by project. The picker starts in the current-folder group; `Tab` reveals the profile's other projects.
 
-The usual default-profile location is `~/.omp/agent/sessions/`. A named profile normally uses `~/.omp/profiles/<name>/agent/sessions/`. XDG configuration and directory overrides can change those paths, so `/session info` is the authoritative location for the active session.
+<Tabs items={['macOS / Linux', 'Windows']}>
+  <Tab value="macOS / Linux">
+    - Default profile: `~/.omp/agent/sessions/`
+    - Named profile: `~/.omp/profiles/<name>/agent/sessions/`
+  </Tab>
+  <Tab value="Windows">
+    - Default profile: `%USERPROFILE%\.omp\agent\sessions\`
+    - Named profile: `%USERPROFILE%\.omp\profiles\<name>\agent\sessions\`
+  </Tab>
+</Tabs>
+
+XDG configuration and directory overrides can change those paths, so `/session info` is the authoritative location for the active session.
 
 Use `--session-dir <path>` when one launch must save and look up sessions in a specific directory. Reuse the same flag when resuming from that custom location. Prefer profiles when you want durable separation between clients, identities, or work contexts; prefer `/move` when only one conversation belongs to a different project.
 
@@ -184,39 +217,52 @@ Saved JSONL files and artifacts are local, but they may contain prompts, source 
 
 After a terminal disconnect, process crash, or forced restart:
 
-1. Return to the same project and run `omp -c`.
-2. If that is not the right conversation, run `omp -r`, type a distinctive phrase, and check sessions marked **interrupted**.
-3. Read the last completed messages and any pending-tool warning before sending another prompt.
-4. Verify external side effects before asking omp to repeat a command. The transcript can show that a tool result was never recorded even when the command changed something outside omp.
+<Steps>
+  <Step>
+    ### Resume the latest session
+
+    Return to the same project and run `omp -c`.
+  </Step>
+  <Step>
+    ### Search interrupted sessions
+
+    If that is not the right conversation, run `omp -r`, type a distinctive phrase, and check sessions marked **interrupted**.
+  </Step>
+  <Step>
+    ### Inspect the transcript tail
+
+    Read the last completed messages and any pending-tool warning before sending another prompt.
+  </Step>
+  <Step>
+    ### Verify external side effects
+
+    Verify external side effects before asking omp to repeat a command. The transcript can show that a tool result was never recorded even when the command changed something outside omp.
+  </Step>
+</Steps>
 
 omp preserves completed entries before the crash and ignores an incomplete trailing record. It does not invent the missing result of an interrupted tool call or the unsaved tail of a streaming response.
 
 ## Troubleshooting
 
-### The picker says there are no sessions
+<Accordions>
+  <Accordion title="The picker says there are no sessions">
+    Press `Tab`; you may be viewing only the current folder. Check that you launched with the same `--profile` as before. If the session used `--session-dir`, pass that directory again. Use `/session info` before leaving a session to capture its exact path.
+</Accordion>
+  <Accordion title="-c opened the wrong work">
+    `-c` favors the last session associated with the current terminal, then the latest session for the directory. Use `omp -r` to choose explicitly, or `/rename` and `/pin` the session you return to often.
+</Accordion>
+  <Accordion title="A known ID is not found">
+    Open `omp -r`, press `Tab`, and search the all-projects view. Use a longer ID prefix if several sessions begin alike. Profiles and custom session directories are separate search scopes; switch to the original profile or pass the original `--session-dir`.
+</Accordion>
+  <Accordion title="Fork or delete is unavailable">
+    Forking requires persistence, so relaunch without `--no-session`. Deleting requires an actual saved file; a brand-new empty session may have nothing to delete yet. Wait for a streaming response to finish or abort it before moving, deleting, or forking.
+</Accordion>
+  <Accordion title="The project directory was renamed or removed">
+    Resume by ID from an interactive terminal. omp offers to re-root a session whose recorded directory no longer exists into the current directory. For an existing but different project, resume it normally and use `/move <path>` when you intentionally want to reassign it.
+</Accordion>
+</Accordions>
 
-- Press `Tab`; you may be viewing only the current folder.
-- Check that you launched with the same `--profile` as before.
-- If the session used `--session-dir`, pass that directory again.
-- Use `/session info` before leaving a session to capture its exact path.
-
-### `-c` opened the wrong work
-
-`-c` favors the last session associated with the current terminal, then the latest session for the directory. Use `omp -r` to choose explicitly, or `/rename` and `/pin` the session you return to often.
-
-### A known ID is not found
-
-Open `omp -r`, press `Tab`, and search the all-projects view. Use a longer ID prefix if several sessions begin alike. Profiles and custom session directories are separate search scopes; switch to the original profile or pass the original `--session-dir`.
-
-### Fork or delete is unavailable
-
-Forking requires persistence, so relaunch without `--no-session`. Deleting requires an actual saved file; a brand-new empty session may have nothing to delete yet. Wait for a streaming response to finish or abort it before moving, deleting, or forking.
-
-### The project directory was renamed or removed
-
-Resume by ID from an interactive terminal. omp offers to re-root a session whose recorded directory no longer exists into the current directory. For an existing but different project, resume it normally and use `/move <path>` when you intentionally want to reassign it.
-
-Command-line flags are listed in [CLI reference](/docs/cli), and all interactive commands are listed in [Slash commands](/docs/slash).
+Command-line flags are listed in [CLI reference](cli), and all interactive commands are listed in [Slash commands](slash).
 
 ---
 

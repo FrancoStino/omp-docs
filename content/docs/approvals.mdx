@@ -7,7 +7,9 @@ description: "Choose which capabilities run immediately, which stop for confirma
 
 Tool approvals protect the boundary between a model proposing an action and omp running that action with your account's access. They are most useful for mutations, command execution, browser or desktop control, and delegated work. They do not make model output trustworthy or sandbox an allowed command.
 
-The built-in default is **`yolo`**. For an interactive coding session, a safer starting point is **`write`**:
+<Callout type="warn" title="The default is yolo">
+  The built-in default is **`yolo`**. For an interactive coding session, a safer starting point is **`write`**:
+</Callout>
 
 ```yaml
 # ~/.omp/agent/config.yml
@@ -69,7 +71,9 @@ tools:
 omp --config ./ci-approvals.yml --print "update generated files and report the diff"
 ```
 
-Treat this as permission design, not just prompt suppression. Run automation in a suitably restricted account or container and grant only the tools it needs.
+<Callout type="error" title="Permission design, not prompt suppression">
+  Run automation in a suitably restricted account or container and grant only the tools it needs.
+</Callout>
 
 ### ACP clients
 
@@ -83,7 +87,7 @@ omp acp --approval-mode yolo
 omp acp --yolo
 ```
 
-An explicitly configured `tools.approvalMode: yolo` also skips that ACP gate unless a per-tool policy says `prompt` or `deny`. ACP has no per-session approval field in `session/new`, `session/load`, or `session/resume`; launch a separate `omp acp` process or give it a session-specific `--config` overlay. See [ACP](/docs/acp) for client setup.
+An explicitly configured `tools.approvalMode: yolo` also skips that ACP gate unless a per-tool policy says `prompt` or `deny`. ACP has no per-session approval field in `session/new`, `session/load`, or `session/resume`; launch a separate `omp acp` process or give it a session-specific `--config` overlay. See [ACP](acp) for client setup.
 
 ## Override individual capabilities
 
@@ -106,7 +110,7 @@ tools:
     mcp__filesystem__delete: deny
 ```
 
-Use the exact tool name shown in a pending/completed call or in [Tools](/docs/tools). For a mounted `xd://` capability, its own policy is checked first; if none exists, the outer `write` policy is the fallback. Invalid policy strings are ignored, so use only `allow`, `prompt`, or `deny` and audit the effective YAML with:
+Use the exact tool name shown in a pending/completed call or in [Tools](tools). For a mounted `xd://` capability, its own policy is checked first; if none exists, the outer `write` policy is the fallback. Invalid policy strings are ignored, so use only `allow`, `prompt`, or `deny` and audit the effective YAML with:
 
 ```sh
 omp config get tools.approvalMode
@@ -156,19 +160,25 @@ For each call, omp first asks the tool for its capability tier and any argument-
 
 In `yolo`, a bare tool safety override does not itself prompt, but an explicit tool `prompt`, your `prompt`, either kind of `deny`, and provider safety checks still apply. This distinction explains why two calls to the same tool can behave differently: the arguments can select a different tier or policy. For example, `bash` recognizes a narrow set of critical shapes such as recursive destruction of absolute paths, remote-fetch-then-execute, host shutdown, and writes to sensitive account files. That built-in check forces a prompt in non-yolo modes but is a bare override, so `yolo` skips it. To make a boundary absolute under `yolo`, configure a `bash.patterns` `deny` or a per-tool `deny`; use `prompt` where an interactive review is required.
 
-Tool and extension enforcement is separate from the mode calculation. An extension may block a call, a tool may reject unsafe or invalid input, the operating system or provider may withhold permission, and a runtime error may stop an already approved action. Tool authors can declare these boundaries; see [Custom tools](/docs/custom-tools#optional-behavior).
+Tool and extension enforcement is separate from the mode calculation. An extension may block a call, a tool may reject unsafe or invalid input, the operating system or provider may withhold permission, and a runtime error may stop an already approved action. Tool authors can declare these boundaries; see [Custom tools](custom-tools#optional-behavior).
 
 ## Computer and provider safety
 
 The `computer` capability is disabled by default. When enabled, a call declaring `read_only: true` is read-tier; a mutating, missing, or malformed declaration is exec-tier. Its approval prompt marks read-only calls and shows the submitted code. The declaration selects the gate—it is not static proof that arbitrary code is harmless.
 
-Provider-originated computer calls can also carry pending safety checks. Those checks **always require interactive confirmation**, even in `yolo`, with `computer: allow`, or after approval of an outer mounted-capability dispatch. The prompt lists the provider's check codes, messages, and sanitized data. With no interactive UI, omp fails closed.
+<Callout type="warn" title="Provider safety checks always confirm">
+  Provider-originated computer calls can also carry pending safety checks. Those checks **always require interactive confirmation**, even in `yolo`, with `computer: allow`, or after approval of an outer mounted-capability dispatch. The prompt lists the provider's check codes, messages, and sanitized data. With no interactive UI, omp fails closed.
+</Callout>
 
-Even after approval, consequential real-world actions may stop for point-of-risk confirmation unless your direct request already authorized the exact target, scope, and values. Text on a web page or desktop is untrusted and cannot grant that authorization. `yolo` removes omp's ordinary tier prompt; it does not override provider checks, tool or extension denials, direct-user-authorization rules, OS permissions, or service-side safeguards.
+<Callout type="error" title="yolo does not bypass boundaries">
+  Even after approval, consequential real-world actions may stop for point-of-risk confirmation unless your direct request already authorized the exact target, scope, and values. Text on a web page or desktop is untrusted and cannot grant that authorization. `yolo` removes omp's ordinary tier prompt; it does not override provider checks, tool or extension denials, direct-user-authorization rules, OS permissions, or service-side safeguards.
+</Callout>
 
 ## Headless sessions and subagents
 
-A headless session cannot satisfy a required omp prompt. The call fails with `requires approval but no interactive UI available`; provider safety checks report their own fail-closed error. Change the mode, add a narrowly scoped `allow`, or run through an interactive UI—do not add broad permission merely to hide the error.
+<Callout type="warn" title="Headless sessions fail closed">
+  A headless session cannot satisfy a required omp prompt. The call fails with `requires approval but no interactive UI available`; provider safety checks report their own fail-closed error. Change the mode, add a narrowly scoped `allow`, or run through an interactive UI—do not add broad permission merely to hide the error.
+</Callout>
 
 Subagents are also headless. They run ordinary tier decisions as `yolo` because approval of the parent `task` call is their authorization boundary. Your `tools.approval` map is still inherited: `deny` blocks, `allow` runs, and `prompt` cannot be answered and therefore rejects the subagent call. Review the parent task's assignment and isolation choice before approving it.
 
@@ -182,7 +192,7 @@ From strongest configuration layer to weakest, approval settings resolve as:
 4. global `~/.omp/agent/config.yml`;
 5. the built-in default.
 
-Mappings are deep-merged, so a project can add one `tools.approval` entry without erasing unrelated global entries. Arrays such as `bash.patterns` are replaced wholesale by the higher layer. See [Settings](/docs/settings) for all config locations.
+Mappings are deep-merged, so a project can add one `tools.approval` entry without erasing unrelated global entries. Arrays such as `bash.patterns` are replaced wholesale by the higher layer. See [Settings](settings) for all config locations.
 
 To audit an unexpected result:
 

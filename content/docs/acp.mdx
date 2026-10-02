@@ -45,7 +45,9 @@ In Zed, run **agent: open settings**, open **External Agents**, choose **Add Age
 
 Start a new thread from the Agent Panel and select **Oh My Pi**. Zed owns the thread UI; omp owns the agent, provider connection, and model settings.
 
+<Callout type="info">
 If a GUI-launched Zed cannot find `omp`, replace `"omp"` with the absolute path printed by `command -v omp`. The same rule applies to other clients whose environment does not inherit your shell `PATH`.
+</Callout>
 
 For another ACP client, create the equivalent custom-agent entry: spawn `omp` with the single argument `acp`, keep stdin and stdout connected to the ACP transport, and supply the workspace's absolute path when creating the session. Do not parse terminal UI output or launch `omp` without `acp`.
 
@@ -55,11 +57,21 @@ omp advertises **Use existing local credentials** to every ACP client. Those are
 
 If the client offers **Set up Oh My Pi in terminal**, choose it to open omp's interactive provider setup. Otherwise:
 
-1. Run `omp` in a terminal.
-2. Enter `/login` or `/login <provider>` and finish authentication.
-3. Start a fresh ACP thread in the editor.
+<Steps>
+### Run omp in a terminal
 
-See [Providers](/docs/providers) for credential sources and precedence. After connection, use the editor's session controls to select an available **Model** and **Thinking** level. The model list reflects what omp can use with its current credentials and configuration.
+Launch `omp` from your shell.
+
+### Authenticate provider
+
+Enter `/login` or `/login <provider>` and finish authentication.
+
+### Start a fresh ACP thread
+
+Start a fresh ACP thread in the editor to pick up the credentials.
+</Steps>
+
+See [Providers](providers) for credential sources and precedence. After connection, use the editor's session controls to select an available **Model** and **Thinking** level. The model list reflects what omp can use with its current credentials and configuration.
 
 Now prompt normally, for example:
 
@@ -79,7 +91,7 @@ The standard session controls are:
 - **Model** — any model currently available to omp.
 - **Thinking** — Off, Auto, or a level supported by the selected model.
 
-Choose **Plan** from the client's mode control when you want read-only investigation before edits. omp presents the finished plan for approval; dismissing or declining that prompt never grants write access. `/plan` is a TUI-only command and is not the way to enter plan mode over ACP. See [Plan mode](/docs/plan) for the workflow.
+Choose **Plan** from the client's mode control when you want read-only investigation before edits. omp presents the finished plan for approval; dismissing or declining that prompt never grants write access. `/plan` is a TUI-only command and is not the way to enter plan mode over ACP. See [Plan mode](plan) for the workflow.
 
 Text-capable slash commands are advertised in the client's command menu. TUI-only commands such as `/login` and `/quit` are intentionally absent: authentication and process lifetime belong to the ACP host.
 
@@ -93,7 +105,9 @@ ACP adds an editor-side safety gate before:
 
 The client can offer **Allow once**, **Always allow**, **Reject**, and **Always reject**. An “always” choice is cached only for the current session and for that operation category; it is not a permanent global setting. Ordinary reads and non-destructive file writes do not trigger this ACP-specific gate, though your normal omp approval settings still apply.
 
+<Callout type="warn">
 A rejected, cancelled, or unsupported permission request fails closed. omp does not silently execute the operation.
+</Callout>
 
 For a trusted unattended workspace, make the choice explicit in the client launch arguments:
 
@@ -104,7 +118,7 @@ For a trusted unattended workspace, make the choice explicit in the client launc
 }
 ```
 
-This skips omp and client permission prompts unless a per-tool policy is explicitly set to `prompt` or `deny`. Prefer the default prompted setup for interactive editor use. See [Settings](/docs/settings) for persistent `tools.approvalMode` and per-tool policies.
+This skips omp and client permission prompts unless a per-tool policy is explicitly set to `prompt` or `deny`. Prefer the default prompted setup for interactive editor use. See [Settings](settings) for persistent `tools.approvalMode` and per-tool policies.
 
 ## MCP and editor capabilities
 
@@ -114,37 +128,48 @@ omp also supports text, images, and embedded context supplied by the client. Whe
 
 ## Troubleshooting
 
-### `omp acp` appears to hang
-
+<Accordions>
+<Accordion title="omp acp appears to hang">
 That is expected when you run it by hand: the process is waiting for ACP messages on stdin, and stdout is reserved for the protocol. Configure the editor to spawn it instead. Startup and transport diagnostics go to stderr, and omp logs are under `~/.omp/logs/`.
 
 In Zed, run **dev: open acp logs** to inspect the client side of the connection.
+</Accordion>
 
-### The editor reports `command not found`
-
+<Accordion title="The editor reports command not found">
 Run `command -v omp` in a terminal and use that absolute path as the custom agent's command. GUI applications often receive a smaller `PATH` than interactive shells. If the project is remote, install and authenticate omp in the environment where the ACP process actually runs.
+</Accordion>
 
-### The thread connects but no model works
-
+<Accordion title="The thread connects but no model works">
 Open the terminal setup offered by the client, or run `omp` and `/login <provider>` outside the editor. Then create a new thread. Also check that provider credentials or environment variables are visible to the editor process; editor-native model credentials do not automatically configure omp.
+</Accordion>
 
-### Unsaved changes are missing or terminals open outside the editor
-
+<Accordion title="Unsaved changes are missing or terminals open outside the editor">
 The client may not advertise ACP filesystem or terminal support. Update or reconfigure the client. Without filesystem bridging, save buffers before asking omp to inspect them; without terminal bridging, commands use omp's local runner.
+</Accordion>
 
-### A permission prompt never completes
-
+<Accordion title="A permission prompt never completes">
 The ACP client must render and answer permission requests. Cancelling the dialog or using a client that cannot answer rejects the operation. Use a current client, or deliberately configure an approval policy rather than assuming approval.
+</Accordion>
 
-### MCP tools are missing
-
+<Accordion title="MCP tools are missing">
 Configure the MCP server in the ACP client, not only in omp's local MCP files. Start a new thread so the client can pass the server configuration during session creation.
+</Accordion>
+</Accordions>
 
 ## For ACP client implementers
 
 `omp acp` speaks ACP JSON-RPC over newline-delimited stdio. Keep stdout exclusively connected to the protocol and read diagnostics from stderr. A client can integrate progressively: basic prompting works first, while filesystem access, terminals, permission dialogs, images, embedded context, MCP servers, session history, mode selection, model selection, and thinking controls appear when the client implements the corresponding public ACP capabilities.
 
 The process advertises session creation plus list, load, resume, fork, and close support. Use the official [ACP specification](https://agentclientprotocol.com) for message schemas; omp does not require clients to understand its internal tools or private bridge payloads.
+
+## Related
+
+<Cards>
+  <Card href="providers" title="Providers" description="Credential sources, models, and authentication." />
+  <Card href="plan" title="Plan mode" description="Read-only investigation before edits." />
+  <Card href="settings" title="Settings" description="Persistent approval modes and tool policies." />
+  <Card href="mcp" title="MCP" description="Connect Model Context Protocol servers in ACP." />
+</Cards>
 
 ---
 

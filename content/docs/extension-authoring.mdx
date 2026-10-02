@@ -157,7 +157,7 @@ hello-extension/
 | `tools/*` | Custom tools in the supported script, Markdown, JSON, TS, or JS formats |
 | `.mcp.json` or `mcp.json` | MCP server definitions |
 
-These folders need no fields in `package.json`. Include them in the package's `files` list when publishing. See [Skills](/docs/skills), [Hooks](/docs/hooks), [Custom tools](/docs/custom-tools), and [MCP](/docs/mcp) for each file format.
+These folders need no fields in `package.json`. Include them in the package's `files` list when publishing. See [Skills](skills), [Hooks](hooks), [Custom tools](custom-tools), and [MCP](mcp) for each file format.
 
 A package can expose more than one runtime factory:
 
@@ -229,7 +229,7 @@ omp plugin marketplace add acme/omp-extensions
 omp plugin install hello-extension@acme-extensions
 ```
 
-When releasing an update, tag the repository, update the catalog version and source pin as appropriate, and ask users to run `omp plugin marketplace update` followed by `omp plugin upgrade hello-extension@acme-extensions`. See [Marketplace](/docs/marketplace) for catalog source formats, pinning, scopes, and update behavior, and [Plugins](/docs/plugins) for installation and feature management.
+When releasing an update, tag the repository, update the catalog version and source pin as appropriate, and ask users to run `omp plugin marketplace update` followed by `omp plugin upgrade hello-extension@acme-extensions`. See [Marketplace](marketplace) for catalog source formats, pinning, scopes, and update behavior, and [Plugins](plugins) for installation and feature management.
 
 ## Public extension interfaces
 
@@ -289,7 +289,7 @@ pi.registerFlag("deployment-target", {
 });
 ```
 
-Command names must not collide with built-in slash commands. Shortcut keys use the same IDs described in [Keybindings](/docs/keybindings); reserved terminal and core chords cannot be replaced. Read a registered flag with `pi.getFlag("deployment-target")`.
+Command names must not collide with built-in slash commands. Shortcut keys use the same IDs described in [Keybindings](keybindings); reserved terminal and core chords cannot be replaced. Read a registered flag with `pi.getFlag("deployment-target")`.
 
 ### Tools
 
@@ -352,7 +352,8 @@ Pre-events can cancel or replace their documented operation, `tool_call` can blo
 
 ## Troubleshooting
 
-### The package does not load
+<Accordions>
+  <Accordion title="The package does not load">
 
 - Confirm that each `omp.extensions` path exists and is relative to `package.json`.
 - Confirm the entry default-exports a function, not an already-created object.
@@ -361,18 +362,21 @@ Pre-events can cancel or replace their documented operation, `tool_call` can blo
 - If the extension imports runtime dependencies, run the package manager before loading it and declare those dependencies in `dependencies`, not only `devDependencies`.
 
 One failed extension does not prevent other extension paths from loading.
-
-### It loads, but a capability is missing
+</Accordion>
+  <Accordion title="It loads, but a capability is missing">
 
 - Restart omp after changing an extension factory or installing a package.
 - Make sure bundled folders are at the package root, beside `package.json`, and included in the published tarball.
 - Use `/reload-plugins` for changed skills, slash commands, and MCP servers. Tools, hooks, and extension modules require a new session.
 - Check whether the item was disabled in `/extensions` or by `disabledExtensions` in config. A runtime factory's ID is `extension-module:<filename>`; an `index.ts` entry uses its parent directory name.
 
-### It crashes or behaves differently outside the TUI
+</Accordion>
+  <Accordion title="It crashes or behaves differently outside the TUI">
 
 Extensions are in-process and unsandboxed. Catch failures from your own detached promises, use managed context timers, honor abort signals, and release resources on `session_shutdown`. Guard custom terminal UI with `ctx.mode === "tui"` and provide a non-interactive behavior when the extension must also work in print, RPC, or ACP sessions.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/extension-authoring) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

@@ -43,7 +43,7 @@ A loaded extension can add launch flags. `omp --help` shows those in addition to
 ### Prompts, files, images, and stdin
 
 - Plain positional arguments are joined into the initial request.
-- Prefix a path with `@` to attach it. Text is included as context; supported images are sent as image input. See [Files](/docs/files) for size limits and supported sources.
+- Prefix a path with `@` to attach it. Text is included as context; supported images are sent as image input. See [Files](files) for size limits and supported sources.
 - When stdin is not a TTY, omp reads it automatically. No `-` marker is required.
 - A missing or unreadable `@file` makes the command fail instead of silently omitting it.
 - `@file` arguments are not expanded in `rpc` or `rpc-ui` mode; send input through that protocol instead.
@@ -61,9 +61,9 @@ printf '%s\n' 'Explain packages/core' | omp -p
 | `omp` | Interactive text mode: opens the TUI and keeps the session running. |
 | `omp -p`, `omp --print` | Headless text mode: processes the request, writes the answer, and exits. |
 | `omp -p --mode json` | Writes a newline-delimited structured event stream for automation. |
-| `omp --mode rpc` | Runs the JSON-RPC server over stdio. See [RPC](/docs/rpc). |
+| `omp --mode rpc` | Runs the JSON-RPC server over stdio. See [RPC](rpc). |
 | `omp --mode rpc-ui` | Runs RPC with UI extension events enabled. |
-| `omp --mode acp`, `omp acp` | Runs an Agent Client Protocol server over stdio. See [ACP](/docs/acp). |
+| `omp --mode acp`, `omp acp` | Runs an Agent Client Protocol server over stdio. See [ACP](acp). |
 
 `--mode text` is the default. `--print` controls whether text/JSON runs exit after the request; protocol modes remain servers.
 
@@ -82,7 +82,7 @@ The flags in this section apply to `omp` and `omp launch`. `omp acp` also accept
 | `--alias <command>` | Create a shell shortcut for the selected `--profile`, then exit. |
 | `--config <file>` | Add a YAML settings overlay for this process. Repeatable; later files win. |
 
-Configuration merges in this order: built-in defaults, global configuration, project configuration, files from `PI_CONFIG_FILES`, repeated `--config` files, then runtime overrides such as launch flags. The first global file present is `~/.omp/agent/config.yml` or `~/.omp/agent/config.yaml`; native project settings live at `.omp/config.yml`. Environment-variable precedence is resolver-specific rather than one universal rule. See [Settings](/docs/settings) and [Environment variables](/docs/env).
+Configuration merges in this order: built-in defaults, global configuration, project configuration, files from `PI_CONFIG_FILES`, repeated `--config` files, then runtime overrides such as launch flags. The first global file present is `~/.omp/agent/config.yml` or `~/.omp/agent/config.yaml`; native project settings live at `.omp/config.yml`. Environment-variable precedence is resolver-specific rather than one universal rule. See [Settings](settings) and [Environment variables](env).
 
 ### Saved sessions
 
@@ -118,7 +118,7 @@ Configuration merges in this order: built-in defaults, global configuration, pro
 | `--print-thoughts` | Include thinking blocks in print-mode text output. |
 | `--external-thinking` | Use a private scratchpad while disabling supported provider reasoning. This request shape can trigger provider abuse controls; use at your own risk. |
 
-See [Providers](/docs/providers) for model and credential resolution and [Roles](/docs/roles) for role selection.
+See [Providers](providers) for model and credential resolution and [Roles](roles) for role selection.
 
 ### Prewalk and plan execution
 
@@ -130,7 +130,7 @@ See [Providers](/docs/providers) for model and credential resolution and [Roles]
 | `--plan-yolo` | Start in read-only plan mode, auto-approve the first resolved plan, then execute it. |
 | `--plan-yolo-into <id>` | Choose the model that executes a plan-yolo plan; the default is `smol`. |
 
-See [Prewalk](/docs/prewalk) and [Plan mode](/docs/plan).
+See [Prewalk](prewalk) and [Plan mode](plan).
 
 ### Capabilities, approvals, and runtime
 
@@ -142,10 +142,10 @@ See [Prewalk](/docs/prewalk) and [Plan mode](/docs/plan).
 | `--no-pty` | Disable PTY-backed interactive shell execution. |
 | `--approval-mode <mode>` | Use `always-ask`, `write`, or `yolo` for this session. |
 | `--auto-approve`, `--yolo` | Skip approval prompts for all operations. |
-| `--advisor` | Enable passive per-turn review and injected advice. See [Advisor](/docs/advisor). |
+| `--advisor` | Enable passive per-turn review and injected advice. See [Advisor](advisor). |
 | `--max-time <duration>` | Stop after positive seconds or a duration such as `5s`, `10m`, or `1h`. |
 
-Approval shortcuts weaken the interactive safety boundary. See [Approvals](/docs/approvals) and [Security](/docs/security).
+Approval shortcuts weaken the interactive safety boundary. See [Approvals](approvals) and [Security](security).
 
 ### Extensions, hooks, skills, and rules
 
@@ -204,7 +204,7 @@ Every public subcommand accepts `--help`. Aliases are shown beside their canonic
 | `bench` | Benchmark one or more models. |
 | `browser-relay` | `serve` the Chrome relay or `install` its extension. |
 | `cleanse` | Discover project diagnostics and fix them with file-disjoint workers. |
-| `commit` | Generate a commit message, update changelogs, and commit. See [Commit](/docs/commit). |
+| `commit` | Generate a commit message, update changelogs, and commit. See [Commit](commit). |
 | `completions` | Generate a completion script for `bash`, `zsh`, or `fish`. |
 | `compress` | Densify one or more text files. |
 | `config` | `list`, `get`, `set`, `reset`, `path`, `init-xdg`. |
@@ -215,7 +215,7 @@ Every public subcommand accepts `--help`. Aliases are shown beside their canonic
 | `grievances` | `list`, `clean`, or `push` auto-QA reports. |
 | `images`, `img` | `status`, `doctor`, `probe`, or `purge` image-publication state. |
 | `install` | Install or link extensions; shorthand for `plugin install`/`plugin link`. |
-| `join` | Join a collaboration link. See [Collaboration](/docs/collab). |
+| `join` | Join a collaboration link. See [Collaboration](collab). |
 | `models` | `ls`, `find`, `refresh`, or list a named provider. |
 | `plugin` | Install, configure, enable, disable, discover, and upgrade plugins and marketplaces. |
 | `ps` | `list`, `info`, `logs`, `stop`, `kill`, or `restart` supervised processes. |
@@ -243,7 +243,7 @@ Every public subcommand accepts `--help`. Aliases are shown beside their canonic
 | --- | --- |
 | `omp acp [launch flags]` | Starts ACP over stdio. There are no ACP-only public flags; use the applicable [launch flags](#launch-flags). |
 | `omp agents unpack [flags]` | Writes bundled agent definitions. `--user` targets `~/.omp/agent/agents` (default); `--project` targets `./.omp/agents`; `--dir <path>` overrides both; `-f`, `--force` overwrites; `--json` emits JSON. |
-| `omp browser-relay [serve\|install] [flags]` | Defaults to `serve`. `-p`, `--port <n>` chooses the port; `--token <value>` requires an extension token; `--dir <path>` selects the install directory; `--no-group` leaves Chrome tabs ungrouped; `-v`, `--verbose` logs traffic summaries. See [Computer use](/docs/computer). |
+| `omp browser-relay [serve\|install] [flags]` | Defaults to `serve`. `-p`, `--port <n>` chooses the port; `--token <value>` requires an extension token; `--dir <path>` selects the install directory; `--no-group` leaves Chrome tabs ungrouped; `-v`, `--verbose` logs traffic summaries. See [Computer use](computer). |
 | `omp join <link>` | Joins the encrypted collaboration link supplied by a host. No command-specific flags. |
 | `omp ps [action] [name] [flags]` | `list` (default) shows processes; `info` shows one; `logs` reads output; `stop` requests graceful shutdown; `kill` terminates immediately; `restart` restarts it. `-a`, `--all`; `-j`, `--json`; `--plain`; `--dir <path>`; `--global <scope>`; `-f`, `--follow`; `--head`; `-n`, `--lines <n>` (max 1000); `--grep <regex>`; `--timeout <seconds>` for `stop`. |
 | `omp share <session> [--gist]` | Shares a session ID prefix or JSONL path. `--gist` uses a secret GitHub gist instead of the share server. |
@@ -344,6 +344,8 @@ These are shell commands. Their arguments are ordinary CLI syntax; they are not 
 
 ## Practical examples
 
+<Callout type="info">
+
 ```sh
 # Start in another directory with an additional workspace root
 omp --cwd apps/web --add-dir packages/ui "Fix the broken component test"
@@ -379,3 +381,5 @@ If a command rejects an action or flag, run `omp <command> --help` from the inst
 ---
 
 Source: [omp.sh](https://omp.sh/docs/cli) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+
+</Callout>

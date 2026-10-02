@@ -37,10 +37,10 @@ These names ship in the core registry and take precedence over dynamically disco
 | --- | --- |
 | `/settings` | Opens the settings menu. |
 | `/setup [providers]` Alias: `/providers` | Opens provider setup for sign-in and web-search providers. No other subcommand is accepted. |
-| `/plan [prompt]` | Toggles plan mode; an inline prompt starts planning immediately. Requires `plan.enabled`, cannot start during goal mode, and is mutually exclusive with vibe mode. See [Plan mode](/docs/plan). |
+| `/plan [prompt]` | Toggles plan mode; an inline prompt starts planning immediately. Requires `plan.enabled`, cannot start during goal mode, and is mutually exclusive with vibe mode. See [Plan mode](plan). |
 | `/plan-review` | Reopens the latest plan review. Available only while plan mode is active. |
-| `/vibe [prompt]` | Toggles read-only vibe mode and optionally starts it with a prompt. It cannot start during plan or goal mode. See [Vibe mode](/docs/vibe). |
-| `/goal [objective]` | Opens the goal editor when inactive or the management menu when active; an inline objective starts a goal directly. Requires `goal.enabled` and cannot start during plan or vibe mode. See the subcommands below and [Goal mode](/docs/goal). |
+| `/vibe [prompt]` | Toggles read-only vibe mode and optionally starts it with a prompt. It cannot start during plan or goal mode. See [Vibe mode](vibe). |
+| `/goal [objective]` | Opens the goal editor when inactive or the management menu when active; an inline objective starts a goal directly. Requires `goal.enabled` and cannot start during plan or vibe mode. See the subcommands below and [Goal mode](goal). |
 | `/guided-goal [rough objective]` | Starts an interview in chat, then configures goal mode from the result. It has the same `goal.enabled`, plan-mode, and vibe-mode constraints as `/goal`. |
 | `/loop [count\|duration] [prompt]` | Toggles automatic resubmission after each yield. A positive integer limits iterations; durations accept compact or spaced forms such as `90s`, `10 min`, or `1h30m`. Plain prose is an unbounded inline prompt. Run `/loop` again to stop; `Escape` cancels the current iteration. |
 | `/queue <message>` | Delivers a follow-up after the active turn yields; if idle, starts it immediately. `-> message` and `=> message` are equivalent editor shorthand. |
@@ -50,8 +50,8 @@ These names ship in the core registry and take precedence over dynamically disco
 | `/extended-context [on\|off\|status]` | Bare form toggles the persisted premium long-context setting; `toggle` is also accepted. |
 | `/computer [on\|off\|status]` | Bare form toggles the native computer-use tool for this session. `status` reports backend, permissions, exposure, and model; enabling can be unavailable in the session. `toggle` is also accepted. |
 | `/vision <on\|off\|auto\|status>` | Sets a session override for the `inspect_image` delegation tool. `auto` follows the configured mode and hides delegation for models with native image input. |
-| `/prewalk` | Arms the authenticated `@smol` role for the next todo-gated edit or write, even if omp was not launched with `--prewalk`. See [Prewalk](/docs/prewalk). |
-| `/advisor [on\|off\|status\|dump [raw]\|configure]` | Bare form toggles the advisor; `/advisor toggle` is equivalent. Explicit forms are `/advisor on`, `/advisor off`, `/advisor status`, `/advisor dump [raw]`, and `/advisor configure`. `dump` copies a compact transcript unless `raw` is supplied; `configure` opens the TUI editor. A configured advisor still needs a model assigned to the `advisor` role. See [Advisor](/docs/advisor). |
+| `/prewalk` | Arms the authenticated `@smol` role for the next todo-gated edit or write, even if omp was not launched with `--prewalk`. See [Prewalk](prewalk). |
+| `/advisor [on\|off\|status\|dump [raw]\|configure]` | Bare form toggles the advisor; `/advisor toggle` is equivalent. Explicit forms are `/advisor on`, `/advisor off`, `/advisor status`, `/advisor dump [raw]`, and `/advisor configure`. `dump` copies a compact transcript unless `raw` is supplied; `configure` opens the TUI editor. A configured advisor still needs a model assigned to the `advisor` role. See [Advisor](advisor). |
 | `/browser [headless\|visible]` | Bare form toggles the browser between headless and visible and restarts it. Requires `browser.enabled`. `hidden` means headless; `show` and `headful` mean visible. |
 | `/force:<tool-name> [prompt]` Also `/force <tool-name> [prompt]` | Forces one tool choice for the next agent turn. An inline prompt starts that turn; without it, the next message uses the choice. The tool must be active. |
 | `/live` | Starts Codex-backed realtime voice mode; run it again to stop. Interactive TUI only. |
@@ -70,7 +70,7 @@ These names ship in the core registry and take precedence over dynamically disco
 
 ### Security
 
-`/security` requires `security.enabled`. A bare `/security` lists stored scans. The command starts local scan work as background operations, so use `status` rather than waiting on the prompt. Cloud forms also require a stored OpenAI Codex OAuth account. See [Security](/docs/security) for the scan model and artifacts.
+`/security` requires `security.enabled`. A bare `/security` lists stored scans. The command starts local scan work as background operations, so use `status` rather than waiting on the prompt. Cloud forms also require a stored OpenAI Codex OAuth account. See [Security](security) for the scan model and artifacts.
 
 | Form | Effect |
 | --- | --- |
@@ -111,12 +111,12 @@ These names ship in the core registry and take precedence over dynamically disco
 | `/tree` | Opens the in-place session tree and switches to an existing branch. |
 | `/branch` | Selects an earlier message and creates another branch in the same session file. |
 | `/fork` | Selects an earlier message and creates a separate session file from it. |
-| `/compact [focus]` | Manually compacts context using configured methods and optional focus instructions. See [Compaction](/docs/compaction). |
+| `/compact [focus]` | Manually compacts context using configured methods and optional focus instructions. See [Compaction](compaction). |
 | `/compact soft [focus]` | Forces a local summary with the active model for this run. |
 | `/compact remote [focus]` | Tries OpenAI-compatible server compaction, then a local summary. |
 | `/compact snapcompact` | Archives history into dense bitmap images without an LLM summary; it rejects focus text. |
 | `/shake [elide\|images\|thinking]` | Removes heavy context without summarizing. Bare form/`elide` strips tool results and large blocks; the other modes strip image or thinking blocks. |
-| `/handoff [focus instructions]` | Generates a handoff document and commits it as a compaction entry in the same session. Requires an idle session with enough messages; it does not automatically end the turn or create a new session. See [Handoff](/docs/handoff). |
+| `/handoff [focus instructions]` | Generates a handoff document and commits it as a compaction entry in the same session. Requires an idle session with enough messages; it does not automatically end the turn or create a new session. See [Handoff](handoff). |
 | `/btw <question>` | Asks an ephemeral side question with current context; the exchange is not added to the persisted conversation. |
 | `/tan <work>` | Starts a full background agent for tangential work. Interactive TUI only. |
 | `/retry` | Retries the last failed agent turn. It works only while idle and only when there is a failed turn to retry. |
@@ -151,7 +151,7 @@ A bare `/todo` displays the current phased task list.
 | `/context` | Shows the estimated token budget by source for the current turn. |
 | `/tools` | Shows tools currently visible to the agent and distinguishes active from available tools. |
 | `/changelog [full]` | Shows recent entries; `full` shows the complete changelog. |
-| `/hotkeys` | Shows the live shortcut list. See [Keybindings](/docs/keybindings) for the complete remapping reference. |
+| `/hotkeys` | Shows the live shortcut list. See [Keybindings](keybindings) for the complete remapping reference. |
 | `/extensions` Alias: `/status` | Opens Extension Control Center to inspect and enable or disable discovered capabilities. Interactive TUI only. |
 | `/agents` | Opens Agent Control Center for task agents, models, prewalk, and advisor configuration. Interactive TUI only. |
 | `/debug` | Opens the configured debugger selector. Interactive TUI only. |
@@ -274,7 +274,7 @@ Three useful commands ship outside the core registry, so they can be overridden:
 
 | Command | Source and effect |
 | --- | --- |
-| `/review [GitHub PR URL\|pr://owner/repo/number] [instructions]` | Bundled TypeScript command. A PR reference starts that review directly; otherwise the TUI offers base-branch, uncommitted, commit, or custom review. See [Review](/docs/review). |
+| `/review [GitHub PR URL\|pr://owner/repo/number] [instructions]` | Bundled TypeScript command. A PR reference starts that review directly; otherwise the TUI offers base-branch, uncommitted, commit, or custom review. See [Review](review). |
 | `/green` | Bundled TypeScript command that expands to a workflow for watching and repairing CI until the current branch is green. |
 | `/init [request]` | Bundled Markdown file command that expands to the repository-initialization workflow. A discovered file command named `init` replaces it. |
 
@@ -286,11 +286,11 @@ When `skills.enabled` and `skills.enableSkillCommands` are on, every discovered 
 /skill:<name> [arguments]
 ```
 
-The command loads that skill's instructions for the turn. Skill commands are user-attributed prompts, not core built-ins. Use `/extensions` to see their source and state. See [Skills](/docs/skills).
+The command loads that skill's instructions for the turn. Skill commands are user-attributed prompts, not core built-ins. Use `/extensions` to see their source and state. See [Skills](skills).
 
 ### Extension and executable commands
 
-Extensions may register in-session commands with their own UI or program logic. User/project TypeScript command modules are discovered from `commands/<name>/index.{ts,js,mjs,cjs}` under the active agent/config directories, and MCP prompt commands are added by connected servers as `/<server>:<prompt>`. Built-in names are reserved. omp's bundled `/review` and `/green` are the lowest-priority executable commands; a user or project command module with the same name replaces the bundled one. See [Authoring extensions](/docs/extension-authoring).
+Extensions may register in-session commands with their own UI or program logic. User/project TypeScript command modules are discovered from `commands/<name>/index.{ts,js,mjs,cjs}` under the active agent/config directories, and MCP prompt commands are added by connected servers as `/<server>:<prompt>`. Built-in names are reserved. omp's bundled `/review` and `/green` are the lowest-priority executable commands; a user or project command module with the same name replaces the bundled one. See [Authoring extensions](extension-authoring).
 
 ### File slash commands
 
@@ -300,7 +300,7 @@ For duplicate file-command names, the capability provider with the higher priori
 
 ### Prompt templates
 
-Markdown prompt templates also appear as `/<filename>`, but they are a separate, last-resort expansion system. Project templates live under `.omp/prompts/**/*.md`; user templates live in the active agent profile's `prompts/**/*.md`. User templates load before project templates, so a user template wins a same-name project template. See [Prompt templates](/docs/prompt-templates) for arguments and interpolation.
+Markdown prompt templates also appear as `/<filename>`, but they are a separate, last-resort expansion system. Project templates live under `.omp/prompts/**/*.md`; user templates live in the active agent profile's `prompts/**/*.md`. User templates load before project templates, so a user template wins a same-name project template. See [Prompt templates](prompt-templates) for arguments and interpolation.
 
 ### Resolution order
 
@@ -321,7 +321,11 @@ Autocomplete omits lower-priority prompt templates that are already claimed. Use
 
 ## Slash commands versus magic keywords
 
-[Magic keywords](/docs/magic-keywords) are ordinary words in a prompt that add hidden steering for that turn; they are not `/` commands and do not appear in command autocomplete. Likewise, `/review` is a bundled workflow command rather than a core built-in. Use [Review](/docs/review), [Advisor](/docs/advisor), [Vibe](/docs/vibe), [Security](/docs/security), and [Prewalk](/docs/prewalk) for their focused workflows; this page is the inventory and syntax reference.
+<Callout type="info" title="Not all / commands are built-ins">
+  [Magic keywords](magic-keywords) are ordinary words in a prompt that add hidden steering for that turn; they are not `/` commands and do not appear in command autocomplete. Likewise, `/review` is a bundled workflow command rather than a core built-in.
+</Callout>
+
+Use [Review](review), [Advisor](advisor), [Vibe](vibe), [Security](security), and [Prewalk](prewalk) for their focused workflows; this page is the inventory and syntax reference.
 
 ---
 

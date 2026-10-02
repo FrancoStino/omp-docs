@@ -14,9 +14,13 @@ jq -c . ~/.omp/agent/sessions/<project>/<session>.jsonl
 
 On a default installation the root is `~/.omp/agent/sessions`. XDG or agent-directory configuration can relocate it. Project directory names are an implementation detail; discover files rather than constructing their paths. A normal interactive filename is `<filesystem-safe-timestamp>_<session-id>.jsonl`. Subagent sessions can instead appear beneath the parent session's sibling artifact directory.
 
-Treat a live file as a journal: read it without locking, tolerate a final incomplete line, and retry that line after the turn finishes. For a durable archive or migration, close the owning omp process and copy the JSONL together with the blob store described under [Portability and redaction](#portability-and-redaction). Do not edit a session in place while omp is running. Although most records are appended, omp can rewrite a file during migration or maintenance, and its fixed-width title record is intentionally updated in place.
+Treat a live file as a journal: read it without locking, tolerate a final incomplete line, and retry that line after the turn finishes. For a durable archive or migration, close the owning omp process and copy the JSONL together with the blob store described under [Portability and redaction](#portability-and-redaction).
 
-For user-facing resume, branch, and sharing workflows, see [Sessions](/docs/sessions).
+<Callout type="warn">
+Do not edit a session in place while omp is running. Although most records are appended, omp can rewrite a file during migration or maintenance, and its fixed-width title record is intentionally updated in place.
+</Callout>
+
+For user-facing resume, branch, and sharing workflows, see [Sessions](sessions).
 
 ## Physical file layout
 
@@ -180,22 +184,33 @@ Blob bytes live in the omp blob store, normally `~/.omp/agent/blobs/<sha256>`. T
 
 For a faithful migration:
 
-1. stop or detach the process writing the session;
-2. copy the JSONL without changing record order or opaque fields;
-3. copy referenced blobs;
-4. decide whether absolute paths in `cwd`, `additionalDirectories`, `parentSession`, and `previousSessionFiles` should be remapped;
-5. open the copy from its new location and verify its tree before deleting the source.
+<Steps>
+### Stop writing process
+
+Stop or detach the process writing the session before copying files.
+
+### Copy the JSONL file
+
+Copy the JSONL without changing record order or opaque fields.
+
+### Copy referenced blobs
+
+Copy referenced blobs from the blob store (`~/.omp/agent/blobs/`).
+
+### Remap absolute paths if needed
+
+Decide whether absolute paths in `cwd`, `additionalDirectories`, `parentSession`, and `previousSessionFiles` should be remapped.
+
+### Verify the tree in the new location
+
+Open the copy from its new location and verify its tree before deleting the source.
+</Steps>
 
 The filename's session ID normally matches `header.id`, but importers should validate rather than derive identity solely from the filename. `parentSession` and previous file paths are provenance and may remain stale after a move.
 
-Before sharing, assume sensitive data exists in all of these places:
-
-- user/developer messages, tool arguments, tool results, and custom entries;
-- assistant thinking, redacted/encrypted blocks, provider payloads, and error text;
-- `session_init` system prompts and tasks;
-- absolute paths and titles;
-- image blobs and provider-native file/response identifiers;
-- `credential_pin.hash`, which is linkable when its input is guessable.
+<Callout type="warn">
+Before sharing, assume sensitive data exists in user/developer messages, tool arguments, tool results, custom entries, assistant thinking, redacted/encrypted blocks, `session_init` system prompts and tasks, absolute paths, image blobs, and `credential_pin.hash`.
+</Callout>
 
 Redaction can invalidate signed reasoning, encrypted replay history, tool-call/result pairing, compaction references, or blob hashes. Export a deliberately lossy transcript when replay is unnecessary. If replay matters, redact structurally on a copy, preserve IDs and parent links, remove whole sensitive block pairs where appropriate, and expect provider cache/replay metadata to become unusable.
 
@@ -227,7 +242,27 @@ jq -c 'select(.id and has("parentId")) | {type,id,parentId,timestamp}' session.j
 grep -o 'blob:sha256:[a-f0-9]\{64\}' session.jsonl | sort -u
 ```
 
-If jq fails only on the last line of a live session, wait for the writer and retry. If omp reports malformed records, preserve the original, identify the bad physical lines, and repair a copy. If a session opens on an unexpected branch, inspect the last logical entry and its ancestor chain. If images are missing after migration, restore the referenced blob hashes. If an older file changes after resume, that can be the normal version/title-slot migration rather than evidence that JSONL is strictly append-only.
+<Accordions>
+<Accordion title="jq fails on the last line of a live session">
+Live sessions are journals and may have a partially written line until the turn completes. Wait for the writer to finish and retry.
+</Accordion>
+
+<Accordion title="omp reports malformed records">
+Preserve the original file, identify the bad physical lines, and repair a copy rather than editing in place.
+</Accordion>
+
+<Accordion title="A session opens on an unexpected branch">
+Inspect the last logical entry and its ancestor chain. On load, omp derives the initial leaf from the last logical entry in file order.
+</Accordion>
+
+<Accordion title="Images are missing after migration">
+Restore the referenced blob hashes in `~/.omp/agent/blobs/`. Large image payloads are externalized and referenced by SHA-256 hash.
+</Accordion>
+
+<Accordion title="An older file changes after resume">
+This can be the normal version or title-slot migration rather than evidence that JSONL is strictly append-only.
+</Accordion>
+</Accordions>
 
 ## Persisted data versus runtime state
 
@@ -247,6 +282,15 @@ Not represented as stable file-format state:
 - guarantees that opaque provider metadata remains usable with another account, provider, or omp version.
 
 Integrations should parse the durable tree and declared payloads, preserve what they do not understand, and avoid treating a saved file as a serialized session-manager process.
+
+## Related
+
+<Cards>
+  <Card href="sessions" title="Sessions" description="User-facing resume, branch, and sharing workflows." />
+  <Card href="session-tree" title="Session tree" description="Navigate, branch, and fork conversational paths." />
+  <Card href="compaction" title="Compaction" description="Context window compression and memory management." />
+  <Card href="settings" title="Settings" description="Data directory and session configuration." />
+</Cards>
 
 ---
 

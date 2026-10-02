@@ -103,7 +103,7 @@ Completed turns and all branches are stored in the session journal. Normal tree 
 
 The selected point becomes the active endpoint immediately. Your next submission, a branch summary, or the normal session-exit record stores an entry on that path, so resume follows it. If omp is killed before anything can be written after a navigation-only move, resume may return to the last endpoint already represented by the journal; reopen `/tree` and select the intended path again.
 
-[Compaction](/docs/compaction) changes what context is sent to the model on a path; it does not flatten the tree or delete the turns that produced the summary. A path through a compaction point uses that compacted context. Navigating to a point before it lets you continue from the earlier context, and other branches remain visible.
+[Compaction](compaction) changes what context is sent to the model on a path; it does not flatten the tree or delete the turns that produced the summary. A path through a compaction point uses that compacted context. Navigating to a point before it lets you continue from the earlier context, and other branches remain visible.
 
 Branch summaries and compaction summaries solve different problems:
 
@@ -125,11 +125,9 @@ For a stronger boundary before experimentation, use `/fork` first. You can then 
 
 ## Related
 
-- [Sessions](/docs/sessions) — find, resume, branch, fork, and share sessions.
-- [Compaction](/docs/compaction) — how long active paths are summarized.
-- [Session format](/docs/session-format) — the public on-disk format for integrations.
-- [Handoff](/docs/handoff) — pass a structured session recap to a teammate.
-
----
-
-Source: [omp.sh](https://omp.sh/docs/session-tree) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+<Cards>
+  <Card title="Sessions" description="find, resume, branch, fork, and share sessions" href="sessions" />
+  <Card title="Compaction" description="how long active paths are summarized" href="compaction" />
+  <Card title="Session format" description="the public on-disk format for integrations" href="session-format" />
+  <Card title="Handoff" description="pass a structured session recap to a teammate" href="handoff" />
+</Cards>

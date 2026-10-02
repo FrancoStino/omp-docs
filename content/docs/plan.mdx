@@ -15,14 +15,34 @@ Start with the goal and the constraints that would change the design:
 
 You can also type `/plan` with no prompt, or press the default `Alt`+`Shift`+`P` chord, and then enter your request. The status line shows **Plan**, omp switches to the configured `plan` model, and the next turn explores and drafts rather than implements.
 
-For a tiny, well-understood edit, ordinary mode is faster. Planning adds another model turn and consumes context before execution begins.
+<Callout type="info" title="When to skip planning">
+  For a tiny, well-understood edit, ordinary mode is faster. Planning adds another model turn and consumes context before execution begins.
+</Callout>
 
 ## From request to reviewed plan
 
-1. **Describe the outcome.** Include non-negotiable behavior, relevant files or systems, and how you will judge success.
-2. **Let omp investigate.** It reads the code and other available sources, checks assumptions, and builds a Markdown plan without changing the project.
-3. **Review the draft.** When the plan is ready, omp opens the full-screen **Plan Review** surface. You can also reopen the newest draft at any time with `/plan-review`.
-4. **Refine or approve.** Add feedback, remove unwanted sections, or choose how implementation should inherit the planning conversation.
+<Steps>
+  <Step>
+    ### Describe the outcome
+
+    Include non-negotiable behavior, relevant files or systems, and how you will judge success.
+  </Step>
+  <Step>
+    ### Let omp investigate
+
+    It reads the code and other available sources, checks assumptions, and builds a Markdown plan without changing the project.
+  </Step>
+  <Step>
+    ### Review the draft
+
+    When the plan is ready, omp opens the full-screen **Plan Review** surface. You can also reopen the newest draft at any time with `/plan-review`.
+  </Step>
+  <Step>
+    ### Refine or approve
+
+    Add feedback, remove unwanted sections, or choose how implementation should inherit the planning conversation.
+  </Step>
+</Steps>
 
 A useful follow-up is concrete rather than general:
 
@@ -70,7 +90,7 @@ The footer always shows the controls available in the focused region.
 
 The contents sidebar appears only when the terminal is wide enough and the plan has at least two headings. Section delete and section-level annotation controls therefore may not be visible in a narrow terminal; you can still refine with a normal follow-up prompt or use an external editor.
 
-Section deletion, undo, and external-editor changes update the session draft as you work. `Escape` dismisses the overlay but does not roll those edits back. Run `/plan-review` to bring back the newest plan draft. See [Keybindings](/docs/keybindings) to inspect or change the plan toggle and external-editor chords.
+Section deletion, undo, and external-editor changes update the session draft as you work. `Escape` dismisses the overlay but does not roll those edits back. Run `/plan-review` to bring back the newest plan draft. See [Keybindings](keybindings) to inspect or change the plan toggle and external-editor chords.
 
 ## Pause, resume, or leave
 
@@ -82,13 +102,15 @@ Section deletion, undo, and external-editor changes update the session draft as 
 
 Pressing `Escape` in Plan Review is different: it only closes the review surface. Plan mode remains active, so you can keep discussing the draft or reopen it with `/plan-review`.
 
-Plan mode cannot run at the same time as goal mode or vibe mode. Exit the active or paused conflicting mode before entering plan mode.
+<Callout type="warn" title="Mutually exclusive modes">
+  Plan mode cannot run at the same time as goal mode or vibe mode. Exit the active or paused conflicting mode before entering plan mode.
+</Callout>
 
 ## Planner model and settings
 
 Plan mode is enabled by default and does not start automatically. It temporarily switches the session to the `plan` role on entry, including that role's configured thinking level, and restores the previous model when you leave unless you choose an implementation role in Plan Review.
 
-A minimal persistent setup in [`config.yml`](/docs/settings) is:
+A minimal persistent setup in [`config.yml`](settings) is:
 
 ```yaml
 plan:
@@ -112,14 +134,41 @@ If you change the `plan` role while plan mode is active, omp applies the new rol
 
 ## Limitations and troubleshooting
 
-- **`Plan mode is disabled`** — set `plan.enabled: true` in the active settings scope, then run `/plan` again.
-- **`Exit goal mode first` or `Exit vibe mode first`** — the modes are mutually exclusive. A paused plan also must be turned fully off before entering goal mode.
-- **`No plan to review yet`** — the planning turn has not produced a draft. Ask omp to finish the plan, then use `/plan-review`.
-- **Keep-context is dimmed** — the conversation is above 95% of the execution model's context window. Use compact or fresh execution.
-- **Compaction was cancelled after approval** — omp leaves the plan approved but does not dispatch implementation. Submit another turn to continue from the approved plan.
-- **The external editor does not open** — set `$VISUAL` or `$EDITOR`; otherwise use annotations and follow-up prompts in omp.
-- **Startup plan mode does not activate in `--print` or JSON output** — `plan.defaultOnStartup` is interactive-only because headless runs have no review surface. `--plan-yolo` is the separate headless flow; it auto-approves and therefore intentionally skips all human review choices documented above.
-- **Planning is read-only for omp, not for you** — shell commands you run yourself can still change files or system state.
+<Accordions>
+  <Accordion title="Plan mode is disabled">
+    Set `plan.enabled: true` in the active settings scope, then run `/plan` again.
+</Accordion>
+  <Accordion title="Exit goal mode first or Exit vibe mode first">
+    The modes are mutually exclusive. A paused plan also must be turned fully off before entering goal mode.
+</Accordion>
+  <Accordion title="No plan to review yet">
+    The planning turn has not produced a draft. Ask omp to finish the plan, then use `/plan-review`.
+</Accordion>
+  <Accordion title="Keep-context is dimmed">
+    The conversation is above 95% of the execution model's context window. Use compact or fresh execution.
+</Accordion>
+  <Accordion title="Compaction was cancelled after approval">
+    omp leaves the plan approved but does not dispatch implementation. Submit another turn to continue from the approved plan.
+</Accordion>
+  <Accordion title="The external editor does not open">
+    Set `$VISUAL` or `$EDITOR`; otherwise use annotations and follow-up prompts in omp.
+</Accordion>
+  <Accordion title="Startup plan mode does not activate in --print or JSON output">
+    `plan.defaultOnStartup` is interactive-only because headless runs have no review surface. `--plan-yolo` is the separate headless flow; it auto-approves and therefore intentionally skips all human review choices documented above.
+</Accordion>
+  <Accordion title="Planning is read-only for omp, not for you">
+    Shell commands you run yourself can still change files or system state.
+</Accordion>
+</Accordions>
+
+## Related
+
+<Cards>
+  <Card title="Goal mode" description="Durable objectives with token budgets and supervision" href="goal" />
+  <Card title="Run modes" description="Interactive, one-shot, and turn controls overview" href="modes" />
+  <Card title="Keybindings" description="Key chords and shortcuts for plan review and navigation" href="keybindings" />
+  <Card title="Settings" description="Persistent configuration and model role definitions" href="settings" />
+</Cards>
 
 ---
 

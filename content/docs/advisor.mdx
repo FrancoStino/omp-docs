@@ -9,7 +9,7 @@ An advisor is a separate model that reviews the main agent's work as the session
 
 The tradeoff is real: the advisor makes its own model requests, uses its own context, and is billed separately. A larger model may catch subtler problems but costs more; several advisors multiply that usage. Review normally happens in the background, but an important note can cause more main-agent work, and optional catch-up settings can add latency. For routine edits, leave it off or choose a fast, inexpensive reviewer.
 
-The smallest persistent setup is two entries in [`~/.omp/agent/config.yml`](/docs/settings):
+The smallest persistent setup is two entries in [`~/.omp/agent/config.yml`](settings):
 
 ```yaml
 modelRoles:
@@ -55,7 +55,7 @@ Treat a note as informed review, not a new user instruction. If the main agent r
 | `/advisor dump raw` | Copy the full diagnostic dump, including instructions, thinking, and tool activity. Handle it as sensitive data. |
 | `/advisor configure` | Open the interactive editor for project- or user-level `WATCHDOG.yml`. TUI only. |
 
-A bare `/advisor` is a toggle, not a status command. Session toggles are temporary; edit [`config.yml`](/docs/settings) when you want the choice to persist.
+A bare `/advisor` is a toggle, not a status command. Session toggles are temporary; edit [`config.yml`](settings) when you want the choice to persist.
 
 ## Give the reviewer project-specific priorities
 
@@ -131,7 +131,7 @@ Unknown tool names are dropped with a warning. Check `/advisor status` and the l
 
 ## Cost, latency, and supervision settings
 
-These optional settings belong in [`config.yml`](/docs/settings):
+These optional settings belong in [`config.yml`](settings):
 
 ```yaml
 advisor:
@@ -159,15 +159,19 @@ Enable review for one print-mode process without changing persistent settings:
 omp -p --advisor "Audit this migration plan and report the safest rollout."
 ```
 
-`--advisor` enables the configured default or roster for that process; it still needs resolvable advisor models and provider credentials. Print mode waits for final review before disposal so late notes are not silently lost, which can make the command finish later than an ordinary `-p` run. Use it selectively in automation and account for both the extra model cost and the longer completion time. See the [CLI reference](/docs/cli) for other launch flags.
+`--advisor` enables the configured default or roster for that process; it still needs resolvable advisor models and provider credentials. Print mode waits for final review before disposal so late notes are not silently lost, which can make the command finish later than an ordinary `-p` run. Use it selectively in automation and account for both the extra model cost and the longer completion time. See the [CLI reference](cli) for other launch flags.
 
 ## Privacy and safety
+
+<Callout type="warn">
 
 Enabling an advisor sends session material to the advisor model's provider. That includes your prompts, the main agent's output and reasoning, and relevant tool results; investigative tools can expose any files they read. Session-managed secrets are obfuscated before provider-bound advisor messages, but this is not a substitute for choosing a provider and model allowed to process the repository. A multi-provider roster may send the same project context to several vendors.
 
 Advisor turns and usage are recorded with the owning session so cost reporting and later inspection work. `/advisor dump raw` contains substantially more detail than the compact dump; review it before pasting it into an issue or chat. Turning the advisor off stops new reviews but does not erase already recorded session artifacts.
 
 omp rejects unsafe advisor output before it can dispatch tools or steer the main agent. This is defense in depth, not permission to grant broad tools: keep the least-privilege roster, retain normal approval policies, and inspect any proposed high-impact change yourself.
+
+</Callout>
 
 ## Troubleshooting
 

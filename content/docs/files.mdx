@@ -90,7 +90,7 @@ Give omp an `http://` or `https://` URL to extract the page's main content as cl
 
 A path beginning with `ssh://` can address a configured remote POSIX host. omp can list remote directories, read and search remote UTF-8 files, and write a remote file. Direct remote reads are limited to 1 MiB. The host must be configured and verified, and Windows SSH targets are not supported by this path interface; mount them locally or use an explicit remote shell workflow instead.
 
-omp can also follow its own resource links—for example, cached GitHub issues and pull requests, session artifacts, histories, memory, and plan files. See [GitHub integration](/docs/github) for GitHub resources.
+omp can also follow its own resource links—for example, cached GitHub issues and pull requests, session artifacts, histories, memory, and plan files. See [GitHub integration](github) for GitHub resources.
 
 ## What to expect when files change
 
@@ -100,7 +100,7 @@ omp can also follow its own resource links—for example, cached GitHub issues a
 4. **Optional language feedback can follow.** LSP diagnostics and formatting depend on your settings. They are not a substitute for the build or test command you asked omp to run.
 5. **The working tree remains yours.** Review with your normal editor or `git diff`, then ask omp to fix anything unexpected.
 
-For symbol-aware renames and diagnostics, see [Code intelligence](/docs/code-intelligence).
+For symbol-aware renames and diagnostics, see [Code intelligence](code-intelligence).
 
 ## Safety and configuration
 
@@ -110,7 +110,7 @@ The default approval mode is **Yolo**, which allows read, write, and command exe
 omp --approval-mode always-ask
 ```
 
-You can change this persistently in `/settings` under **Interaction → Approvals**. “Always ask” permits read-only inspection automatically and requests confirmation for writes and command execution. For a design pass that cannot modify the workspace, use [Plan mode](/docs/plan).
+You can change this persistently in `/settings` under **Interaction → Approvals**. “Always ask” permits read-only inspection automatically and requests confirmation for writes and command execution. For a design pass that cannot modify the workspace, use [Plan mode](plan).
 
 File-related LSP controls are under `/settings` in **Files → LSP**. By default, format-on-write is off, diagnostics after a whole-file write are on, and diagnostics after incremental edits are off. Enable **Format on Write** or **Diagnostics on Edit** if you want those behaviors automatically, or ask omp to run a specific formatter or check after the change.
 
@@ -122,22 +122,53 @@ For sensitive or high-impact work:
 - Review the displayed diff and `git diff` before asking for a commit.
 - Keep secrets out of prompts and diffs whenever their values are not needed.
 
-See [Settings](/docs/settings) for configuration file locations and precedence.
+See [Settings](settings) for configuration file locations and precedence.
 
 ## Troubleshooting
 
-| Problem | What to do |
-| --- | --- |
-| omp cannot find a local file | Check the path relative to the directory where omp started. Relaunch from the project root or use `omp --cwd /path/to/project`. |
-| An ignored file is missing from results | Name the exact ignored directory or file and explicitly ask omp to include ignored content. Do not broadly include secret files. |
-| A source file looks incomplete | omp probably returned a structural overview. Ask for the exact body of the named function, a line range, or verbatim content. |
-| Results stop after a subset of files | Narrow the request by directory or file type, or ask omp to continue from the remaining matches. |
-| An edit is rejected as stale | Another process changed the file after omp inspected it. Ask omp to reopen the current file and retry against the new content. |
-| A document cannot be decoded | Confirm it is PDF, `.docx`, `.pptx`, `.xlsx`, or `.epub`; convert legacy Office formats first. |
-| An archive can be inspected but not changed | Its format is read-only. Extract it and repack as a supported ZIP, tar, or ASAR format. |
-| An SSH path fails | Verify that normal SSH access works, that the host is a POSIX system known to omp, and that the target is UTF-8 and no larger than 1 MiB for direct reads. |
-| A web page is empty or incomplete | It likely requires JavaScript, a login, or interaction. Ask omp to use the browser and describe the action you want. |
-| Formatting or diagnostics did not run | Ask for the exact formatter/check, or enable the relevant options in `/settings` under **Files → LSP**. |
+<Accordions>
+<Accordion title="omp cannot find a local file">
+
+Check the path relative to the directory where omp started. Relaunch from the project root or use `omp --cwd /path/to/project`.
+</Accordion>
+<Accordion title="An ignored file is missing from results">
+
+Name the exact ignored directory or file and explicitly ask omp to include ignored content. Do not broadly include secret files.
+</Accordion>
+<Accordion title="A source file looks incomplete">
+
+omp probably returned a structural overview. Ask for the exact body of the named function, a line range, or verbatim content.
+</Accordion>
+<Accordion title="Results stop after a subset of files">
+
+Narrow the request by directory or file type, or ask omp to continue from the remaining matches.
+</Accordion>
+<Accordion title="An edit is rejected as stale">
+
+Another process changed the file after omp inspected it. Ask omp to reopen the current file and retry against the new content.
+</Accordion>
+<Accordion title="A document cannot be decoded">
+
+Confirm it is PDF, `.docx`, `.pptx`, `.xlsx`, or `.epub`; convert legacy Office formats first.
+</Accordion>
+<Accordion title="An archive can be inspected but not changed">
+
+Its format is read-only. Extract it and repack as a supported ZIP, tar, or ASAR format.
+</Accordion>
+<Accordion title="An SSH path fails">
+
+Verify that normal SSH access works, that the host is a POSIX system known to omp, and that the target is UTF-8 and no larger than 1 MiB for direct reads.
+</Accordion>
+<Accordion title="A web page is empty or incomplete">
+
+It likely requires JavaScript, a login, or interaction. Ask omp to use the browser and describe the action you want.
+</Accordion>
+<Accordion title="Formatting or diagnostics did not run">
+
+Ask for the exact formatter/check, or enable the relevant options in `/settings` under **Files → LSP**.
+</Accordion>
+</Accordions>
+
 
 ---
 

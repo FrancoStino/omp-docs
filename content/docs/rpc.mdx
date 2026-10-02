@@ -11,8 +11,8 @@ RPC mode is the lowest-common-denominator way to embed omp. Your program starts 
 | --- | --- |
 | Interactive omp | A person is working in the terminal and wants omp's editor, dialogs, and tool views. |
 | One-shot `text` or `json` mode | A shell or CI job needs one prompt and then exits. `json` is an event stream, but it does not accept RPC commands. |
-| [SDK](/docs/sdk) | Your TypeScript application can run omp in-process and wants typed, direct APIs instead of a process boundary. |
-| [ACP](/docs/acp) | You are building an editor or client that already speaks the standardized Agent Client Protocol. |
+| [SDK](sdk) | Your TypeScript application can run omp in-process and wants typed, direct APIs instead of a process boundary. |
+| [ACP](acp) | You are building an editor or client that already speaks the standardized Agent Client Protocol. |
 | **RPC** | You need a long-lived omp session, streaming output, cancellation, state controls, or host callbacks from any language. |
 
 Start with headless RPC and an ephemeral session:
@@ -21,7 +21,7 @@ Start with headless RPC and an ephemeral session:
 omp --mode rpc --no-session
 ```
 
-Omit `--no-session` to save the conversation under omp's normal session store. Normal model, provider, working-directory, and configuration options still apply; see the [CLI reference](/docs/cli). RPC rejects `@file` command-line arguments—send file references in the prompt instead.
+Omit `--no-session` to save the conversation under omp's normal session store. Normal model, provider, working-directory, and configuration options still apply; see the [CLI reference](cli). RPC rejects `@file` command-line arguments—send file references in the prompt instead.
 
 `--mode rpc-ui` uses the same wire protocol but marks the embedded session as UI-capable and connects UI-dependent tool and extension surfaces to the RPC UI bridge. It does **not** launch a TUI or add a separate “tool card” frame type. Use it only when your host implements those UI behaviors. Either mode can emit `extension_ui_request` frames for features such as extension dialogs or login, so a complete host should understand that sub-protocol.
 
@@ -113,13 +113,37 @@ Do not assume the response arrives before the events: some prompt paths can begi
 
 ### Process lifecycle
 
-1. Spawn `omp --mode rpc` with separate stdin, stdout, and stderr streams.
-2. Wait for `ready` before sending commands.
-3. Read stdout continuously. A host callback or UI request can arrive while a command is outstanding.
-4. Send commands as compact, unchunked JSON objects followed by `\n`.
-5. Close stdin to disconnect. omp rejects pending UI/tool/URI callbacks, drains accepted commands, disposes the session, and exits with code `0`.
+<Steps>
+  <Step>
+    ### Spawn the subprocess
 
-Stdout is exclusively the JSON protocol channel. Logs and diagnostics belong on stderr; never merge stderr into the JSON parser.
+    Spawn `omp --mode rpc` with separate stdin, stdout, and stderr streams.
+  </Step>
+  <Step>
+    ### Await the ready event
+
+    Wait for `ready` before sending commands.
+  </Step>
+  <Step>
+    ### Read stdout continuously
+
+    Read stdout continuously. A host callback or UI request can arrive while a command is outstanding.
+  </Step>
+  <Step>
+    ### Send newline-delimited commands
+
+    Send commands as compact, unchunked JSON objects followed by `\n`.
+  </Step>
+  <Step>
+    ### Close stdin to disconnect
+
+    Close stdin to disconnect. omp rejects pending UI/tool/URI callbacks, drains accepted commands, disposes the session, and exits with code `0`.
+  </Step>
+</Steps>
+
+<Callout type="warn" title="Isolate stdout and stderr">
+  Stdout is exclusively the JSON protocol channel. Logs and diagnostics belong on stderr; never merge stderr into the JSON parser.
+</Callout>
 
 ### Prompt completion
 
@@ -168,42 +192,61 @@ All failures have `type: "response"`, `success: false`, a string `command`, and 
 
 Important edge cases:
 
-- Malformed JSON produces a recoverable failure with `command: "parse"` and no `id`; the next valid line is still processed.
-- An unknown command currently returns no correlation id. Do not send another command until you have validated its `type` locally.
-- A scheduled `prompt` or `abort_and_prompt` can acknowledge success and later emit a failure response with the same id if asynchronous scheduling fails.
-- An extension runtime failure is an `extension_error` event, not a command response.
-- A host that ignores `extension_ui_request`, `host_tool_call`, or `host_uri_request` can deadlock the operation that requested it. Dispatch these frames while other commands are pending.
-- EOF is a deliberate disconnect. Unexpected process exit or broken stdout is a transport failure; any unresolved requests have unknown completion state.
+<Accordions>
+  <Accordion title="Malformed JSON">
+    Malformed JSON produces a recoverable failure with `command: "parse"` and no `id`; the next valid line is still processed.
+</Accordion>
+  <Accordion title="Unknown commands">
+    An unknown command currently returns no correlation id. Do not send another command until you have validated its `type` locally.
+</Accordion>
+  <Accordion title="Asynchronous scheduling failures">
+    A scheduled `prompt` or `abort_and_prompt` can acknowledge success and later emit a failure response with the same id if asynchronous scheduling fails.
+</Accordion>
+  <Accordion title="Extension runtime errors">
+    An extension runtime failure is an `extension_error` event, not a command response.
+</Accordion>
+  <Accordion title="Unexpected disconnect or EOF">
+    EOF is a deliberate disconnect. Unexpected process exit or broken stdout is a transport failure; any unresolved requests have unknown completion state.
+</Accordion>
+</Accordions>
+
+<Callout type="error" title="Avoid callback deadlocks">
+  A host that ignores `extension_ui_request`, `host_tool_call`, or `host_uri_request` can deadlock the operation that requested it. Dispatch these frames while other commands are pending.
+</Callout>
 
 ## Transport versions and large frames
 
-Protocol v1 is active at startup. It emits one JSON object per physical line and caps that line, including its newline, at the advertised `maxFrameBytes` (currently 1 MiB). Inbound frames are always single, unchunked JSONL objects and should stay below that limit.
+<Tabs items={['Protocol v1', 'Protocol v2']}>
+  <Tab value="Protocol v1">
+    Protocol v1 is active at startup. It emits one JSON object per physical line and caps that line, including its newline, at the advertised `maxFrameBytes` (currently 1 MiB). Inbound frames are always single, unchunked JSONL objects and should stay below that limit.
 
-Clients that can reassemble large outputs should negotiate v2 immediately after `ready`:
+    In v1, oversized responses fail with `RPC response exceeded the transport limit`; other frames may be compacted or replaced by `rpc_frame_error`. An oversized `agent_end` can omit messages already delivered through `message_end` and add `messageCount`. Never use `agent_end.messages` as the only transcript store: collect message events or page history with `get_messages_page`.
+  </Tab>
+  <Tab value="Protocol v2">
+    Clients that can reassemble large outputs should negotiate v2 immediately after `ready`:
 
-```json
-{"id":"protocol-1","type":"negotiate_protocol","protocolVersion":2}
-{"id":"protocol-1","type":"response","command":"negotiate_protocol","success":true,"data":{"protocolVersion":2}}
-```
+    ```json
+    {"id":"protocol-1","type":"negotiate_protocol","protocolVersion":2}
+    {"id":"protocol-1","type":"response","command":"negotiate_protocol","success":true,"data":{"protocolVersion":2}}
+    ```
 
-The success response itself is v1. Subsequent oversized logical stdout objects become an uninterrupted sequence of `rpc_chunk` frames:
+    The success response itself is v1. Subsequent oversized logical stdout objects become an uninterrupted sequence of `rpc_chunk` frames:
 
-```json
-{"type":"rpc_chunk","chunkId":"rpc-1","index":0,"count":2,"byteLength":1200000,"data":"BASE64_DATA"}
-```
+    ```json
+    {"type":"rpc_chunk","chunkId":"rpc-1","index":0,"count":2,"byteLength":1200000,"data":"BASE64_DATA"}
+    ```
 
-For each sequence, validate that:
+    For each sequence, validate that:
+    - `chunkId` is unchanged and non-empty;
+    - `index` starts at `0` and increments with no gaps;
+    - `count`, `byteLength`, and `chunkId` match on every chunk;
+    - no ordinary frame interrupts the sequence;
+    - decoded bytes do not exceed `maxReassembledFrameBytes` (currently 64 MiB);
+    - concatenated bytes equal `byteLength`, decode as strict UTF-8, and parse as one JSON object.
 
-- `chunkId` is unchanged and non-empty;
-- `index` starts at `0` and increments with no gaps;
-- `count`, `byteLength`, and `chunkId` match on every chunk;
-- no ordinary frame interrupts the sequence;
-- decoded bytes do not exceed `maxReassembledFrameBytes` (currently 64 MiB);
-- concatenated bytes equal `byteLength`, decode as strict UTF-8, and parse as one JSON object.
-
-`data` is standard base64. Do not dispatch individual chunks as application events. A logical frame above the v2 ceiling becomes an explicit overflow frame instead.
-
-In v1, oversized responses fail with `RPC response exceeded the transport limit`; other frames may be compacted or replaced by `rpc_frame_error`. An oversized `agent_end` can omit messages already delivered through `message_end` and add `messageCount`. Never use `agent_end.messages` as the only transcript store: collect message events or page history with `get_messages_page`.
+    `data` is standard base64. Do not dispatch individual chunks as application events. A logical frame above the v2 ceiling becomes an explicit overflow frame instead.
+  </Tab>
+</Tabs>
 
 ## Public protocol reference
 
@@ -505,17 +548,64 @@ Forwarding defaults to `off`:
 
 ## Host implementation checklist
 
-A robust language-neutral client should:
+A robust language-neutral client should follow these implementation steps:
 
-1. Spawn one process per independently controlled session and wait for `ready`.
-2. Keep stdin writes serialized, newline-terminated, and flushed.
-3. Continuously read stdout while requests are pending; never wait for one response before servicing callbacks.
-4. Generate unique string ids and correlate responses by id, not arrival order.
-5. Track prompt acceptance separately from terminal or local-only completion.
-6. Negotiate v2 and strictly reassemble chunks when large messages are possible.
-7. Dispatch extension UI, host tool, and host URI requests without blocking the reader.
-8. Preserve unknown fields, message roles, content blocks, and event types for forward compatibility.
-9. Close stdin, then wait for process exit during orderly shutdown.
+<Steps>
+  <Step>
+    ### Spawn and await ready
+
+    Spawn one process per independently controlled session and wait for `ready`.
+  </Step>
+  <Step>
+    ### Serialize stdin writes
+
+    Keep stdin writes serialized, newline-terminated, and flushed.
+  </Step>
+  <Step>
+    ### Read stdout continuously
+
+    Continuously read stdout while requests are pending; never wait for one response before servicing callbacks.
+  </Step>
+  <Step>
+    ### Correlate responses by ID
+
+    Generate unique string ids and correlate responses by id, not arrival order.
+  </Step>
+  <Step>
+    ### Track completion independently
+
+    Track prompt acceptance separately from terminal or local-only completion.
+  </Step>
+  <Step>
+    ### Negotiate protocol v2
+
+    Negotiate v2 and strictly reassemble chunks when large messages are possible.
+  </Step>
+  <Step>
+    ### Non-blocking callback dispatch
+
+    Dispatch extension UI, host tool, and host URI requests without blocking the reader.
+  </Step>
+  <Step>
+    ### Preserve forward-compatible fields
+
+    Preserve unknown fields, message roles, content blocks, and event types for forward compatibility.
+  </Step>
+  <Step>
+    ### Clean shutdown
+
+    Close stdin, then wait for process exit during orderly shutdown.
+  </Step>
+</Steps>
+
+## Related
+
+<Cards>
+  <Card title="SDK" description="In-process TypeScript/Bun integration" href="sdk" />
+  <Card title="CLI reference" description="Command-line flags and headless modes" href="cli" />
+  <Card title="Extension authoring" description="Add tools, commands, and UI extensions" href="extension-authoring" />
+  <Card title="Sessions" description="Session lifecycle, state, and persistence" href="sessions" />
+</Cards>
 
 ---
 

@@ -239,18 +239,37 @@ omp install -l ./force-push-guard
 
 `omp install` accepts local paths, npm packages, Git repositories, and marketplace entries. Package imports must be resolvable from the installed package, and every runtime file must be included in the published artifact. Keep secrets and machine-specific policy in user or project configuration rather than committing them into a public package.
 
-See [Authoring extensions](/docs/extension-authoring) for multi-entry packages and [Plugins](/docs/plugins) for installation, scope, updates, and publishing.
+See [Authoring extensions](extension-authoring) for multi-entry packages and [Plugins](plugins) for installation, scope, updates, and publishing.
 
 ## Troubleshooting
 
-| Symptom | Check |
-| --- | --- |
-| Hook missing from `/extensions` | The file must be a direct `.ts` or `.js` child of `hooks/pre` or `hooks/post`, or be passed explicitly. Project discovery uses the session's working directory; user discovery uses the active profile. |
-| Hook appears but a handler never runs | Directory and filename do not select events. Confirm the exact `pi.on("event_name", ...)` registration and any `toolName` filter. |
-| Startup reports an invalid extension | Export one default factory function and fix its import/syntax error. Run with `--log-level debug` to see the failing path. |
-| UI calls disappear in print or RPC mode | Check `ctx.hasUI` or `ctx.mode` before prompting or rendering. Use logging or persisted state for headless modes. |
-| A tool is blocked with an extension failure | A `tool_call` handler threw or exceeded its timeout. Fix the hook rather than raising the timeout first; gates fail closed by design. |
-| Two hooks disagree | Put ordering-dependent logic in one module. For independent modules, remember: first block wins, result/context transforms chain as documented above, and many session result events use the latest returned result. |
+<Accordions>
+<Accordion title="Hook missing from `/extensions`">
+
+The file must be a direct `.ts` or `.js` child of `hooks/pre` or `hooks/post`, or be passed explicitly. Project discovery uses the session's working directory; user discovery uses the active profile.
+</Accordion>
+<Accordion title="Hook appears but a handler never runs">
+
+Directory and filename do not select events. Confirm the exact `pi.on("event_name", ...)` registration and any `toolName` filter.
+</Accordion>
+<Accordion title="Startup reports an invalid extension">
+
+Export one default factory function and fix its import/syntax error. Run with `--log-level debug` to see the failing path.
+</Accordion>
+<Accordion title="UI calls disappear in print or RPC mode">
+
+Check `ctx.hasUI` or `ctx.mode` before prompting or rendering. Use logging or persisted state for headless modes.
+</Accordion>
+<Accordion title="A tool is blocked with an extension failure">
+
+A `tool_call` handler threw or exceeded its timeout. Fix the hook rather than raising the timeout first; gates fail closed by design.
+</Accordion>
+<Accordion title="Two hooks disagree">
+
+Put ordering-dependent logic in one module. For independent modules, remember: first block wins, result/context transforms chain as documented above, and many session result events use the latest returned result.
+</Accordion>
+</Accordions>
+
 
 ---
 

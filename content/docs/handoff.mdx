@@ -22,10 +22,10 @@ Both commands reduce the model's active context in place and retain a recent tai
 | Choose | When you want | Outcome |
 | --- | --- | --- |
 | `/handoff` | A work-focused continuation brief: goal, progress, decisions, constraints, and next steps | omp generates that brief, uses it as the summary of older context, and marks the point as `handed-off` |
-| [`/compact`](/docs/compaction) | General context reduction, or control over the compaction method such as `soft`, `remote`, or `snapcompact` | omp uses the selected compaction method and marks the corresponding compaction point |
+| [`/compact`](compaction) | General context reduction, or control over the compaction method such as `soft`, `remote`, or `snapcompact` | omp uses the selected compaction method and marks the corresponding compaction point |
 | Neither | The current context is still useful and comfortably within the model's limit | Keep working; automatic context maintenance is enabled by default |
 
-Use `/handoff` before changing work phases, returning after a long pause, or preserving a precise implementation/debugging checkpoint. Use `/compact` when the priority is simply freeing context. If you actually want a separate session, use the session controls described in [Sessions](/docs/sessions).
+Use `/handoff` before changing work phases, returning after a long pause, or preserving a precise implementation/debugging checkpoint. Use `/compact` when the priority is simply freeing context. If you actually want a separate session, use the session controls described in [Sessions](sessions).
 
 ## Focus the continuation
 
@@ -126,14 +126,12 @@ compaction:
 | `compaction.handoffSaveToDisk` | `false` | Writes an extra Markdown artifact for automatic handoffs in persisted sessions only. |
 | `display.collapseCompacted` | `true` | Collapses replaced history in the live TUI; turn it off to keep the full transcript inline. |
 
-See [Settings](/docs/settings) for configuration locations, scopes, and precedence.
+See [Settings](settings) for configuration locations, scopes, and precedence.
 
 ## Related
 
-- [Compaction](/docs/compaction) — compaction methods, thresholds, and recovery behavior
-- [Sessions](/docs/sessions) — create, fork, resume, and switch sessions
-- [Plan mode](/docs/plan) — create an implementation plan before preserving the checkpoint
-
----
-
-Source: [omp.sh](https://omp.sh/docs/handoff) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+<Cards>
+  <Card title="Compaction" description="compaction methods, thresholds, and recovery behavior" href="compaction" />
+  <Card title="Sessions" description="create, fork, resume, and switch sessions" href="sessions" />
+  <Card title="Plan mode" description="create an implementation plan before preserving the checkpoint" href="plan" />
+</Cards>

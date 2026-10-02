@@ -87,7 +87,7 @@ Use `/handoff` when a generic conversation summary is too loose—for example, b
 /handoff Focus on the accepted design, files already changed, verification still needed, and known risks.
 ```
 
-Despite the name, the manual command currently **compacts the current session in place**. It does not open a successor session and does not save a Markdown handoff file by default. Wait for the current response to finish, or abort it, before running `/handoff`. See [Handoff](/docs/handoff) for the handoff document's contents and automatic handoff behavior.
+Despite the name, the manual command currently **compacts the current session in place**. It does not open a successor session and does not save a Markdown handoff file by default. Wait for the current response to finish, or abort it, before running `/handoff`. See [Handoff](handoff) for the handoff document's contents and automatic handoff behavior.
 
 ### `/shake`: remove bulk without summarizing the conversation
 
@@ -107,7 +107,11 @@ The targeted variants are more destructive:
 | `/shake images` | Image blocks from the session | No recovery artifact is created. |
 | `/shake thinking` | Stored reasoning blocks | No recovery artifact is created. |
 
-Use image or thinking removal only after that material is no longer needed. A result such as `Nothing to shake`, `No images found`, or `No thinking blocks found` is a successful no-op, not an error.
+<Callout type="warn" title="Permanent removal">
+  Content removed by `/shake images` or `/shake thinking` is not preserved in a recovery artifact. Use image or thinking removal only after that material is no longer needed.
+</Callout>
+
+A result such as `Nothing to shake`, `No images found`, or `No thinking blocks found` is a successful no-op, not an error.
 
 ## Configuration
 
@@ -160,35 +164,36 @@ Inside a session, run `/context` to verify the resulting threshold and available
 
 ## Troubleshooting
 
-### Automatic compaction did not run
+<Accordions>
+  <Accordion title="Automatic compaction did not run">
+    1. Run `/context`. Maintenance does not run merely because a session feels long; the estimated usage must cross the resolved threshold.
+    2. Check `omp config get compaction.enabled` and `omp config get compaction.methodOrder`.
+    3. If you expected idle maintenance, remember that `compaction.idleEnabled` defaults to `false` and the session must exceed `idleThresholdTokens` for at least `idleTimeoutSeconds`.
+    4. If one method is unavailable, let the fallback list proceed. A text-only model, for example, cannot use snapcompact but can continue to handoff, shake, or soft compaction.
 
-1. Run `/context`. Maintenance does not run merely because a session feels long; the estimated usage must cross the resolved threshold.
-2. Check `omp config get compaction.enabled` and `omp config get compaction.methodOrder`.
-3. If you expected idle maintenance, remember that `compaction.idleEnabled` defaults to `false` and the session must exceed `idleThresholdTokens` for at least `idleTimeoutSeconds`.
-4. If one method is unavailable, let the fallback list proceed. A text-only model, for example, cannot use snapcompact but can continue to handoff, shake, or soft compaction.
-
-### `/compact` says the session is too small or already compacted
-
-`Nothing to compact (session too small)` means there is not enough older context to replace. `Already compacted` means no substantial new history exists beyond the latest boundary. Continue working and try again later; no recovery is required.
-
-### Snapcompact fails
-
-Snapcompact requires a vision-capable active model and text its bundled image font can represent. Use `/compact soft` for a predictable text summary. `/compact remote` is another option when the current provider supports server compaction.
-
-### Context is still too large
-
-Run `/context` to identify whether messages or bulky historical results dominate. Use `/shake` first for heavy output; use `/compact soft` when the conversation itself is large. If this repeats, lower `compaction.thresholdPercent`, reduce `compaction.keepRecentTokens`, or choose a model with a larger context window rather than waiting for overflow.
-
-### An important old detail is missing
-
-Press `Ctrl+O` on the compaction divider to inspect the generated summary. Normal compaction preserves the underlying session history, so use the [session tree](/docs/sessions) to revisit or branch from an earlier point. For future manual compactions, include explicit focus instructions or use `/handoff` for a more structured continuation. Content removed by `/shake images` or `/shake thinking` is not preserved in a recovery artifact.
+</Accordion>
+  <Accordion title="/compact says the session is too small or already compacted">
+    `Nothing to compact (session too small)` means there is not enough older context to replace. `Already compacted` means no substantial new history exists beyond the latest boundary. Continue working and try again later; no recovery is required.
+</Accordion>
+  <Accordion title="Snapcompact fails">
+    Snapcompact requires a vision-capable active model and text its bundled image font can represent. Use `/compact soft` for a predictable text summary. `/compact remote` is another option when the current provider supports server compaction.
+</Accordion>
+  <Accordion title="Context is still too large">
+    Run `/context` to identify whether messages or bulky historical results dominate. Use `/shake` first for heavy output; use `/compact soft` when the conversation itself is large. If this repeats, lower `compaction.thresholdPercent`, reduce `compaction.keepRecentTokens`, or choose a model with a larger context window rather than waiting for overflow.
+</Accordion>
+  <Accordion title="An important old detail is missing">
+    Press `Ctrl+O` on the compaction divider to inspect the generated summary. Normal compaction preserves the underlying session history, so use the [session tree](sessions) to revisit or branch from an earlier point. For future manual compactions, include explicit focus instructions or use `/handoff` for a more structured continuation. Content removed by `/shake images` or `/shake thinking` is not preserved in a recovery artifact.
+</Accordion>
+</Accordions>
 
 ## Related
 
-- [Handoff](/docs/handoff) — structured continuation summaries and automatic handoff behavior.
-- [Sessions](/docs/sessions) — stored history, resume, branches, and the session tree.
-- [Settings](/docs/settings) — configuration files, precedence, `/settings`, and `omp config`.
-- [Memory](/docs/memory) — durable facts across sessions; separate from context compaction.
+<Cards>
+  <Card title="Handoff" description="Structured continuation summaries and automatic handoff behavior" href="handoff" />
+  <Card title="Sessions" description="Stored history, resume, branches, and the session tree" href="sessions" />
+  <Card title="Settings" description="Configuration files, precedence, and configuration commands" href="settings" />
+  <Card title="Memory" description="Durable facts across sessions, separate from context compaction" href="memory" />
+</Cards>
 
 ---
 

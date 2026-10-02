@@ -1,4 +1,7 @@
 export function GET() {
-  const enabled = (process.env.AI_API_KEY ?? process.env.OPENROUTER_API_KEY) != null;
-  return Response.json({ enabled, provider: process.env.AI_BASE_URL ?? 'openrouter', model: process.env.AI_MODEL ?? process.env.OPENROUTER_MODEL ?? 'meta-llama/llama-3.1-8b-instruct:free' });
+  const baseURL = process.env.AI_BASE_URL?.trim() ? process.env.AI_BASE_URL : null;
+  const model = process.env.AI_MODEL?.trim() ? process.env.AI_MODEL : null;
+  const apiKey = process.env.AI_API_KEY;
+  const enabled = apiKey != null && apiKey.trim() !== '' && baseURL != null && model != null;
+  return Response.json({ enabled, provider: baseURL, model });
 }

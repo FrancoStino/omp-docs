@@ -191,15 +191,37 @@ Relay URLs may use `wss://` or `https://`; omp normalizes both to a secure relay
 
 ## Troubleshooting
 
-| What you see | What to do |
-| --- | --- |
-| `No relay configured` | Set `collab.relayUrl` in `/settings`, run `omp config set collab.relayUrl wss://…`, or pass a relay to `/collab`. |
-| `Stop hosting first` | Run `/collab stop`, then join the other session. |
-| `Already in a collab session` | Run `/leave` before joining another link. |
-| The guest is read-only | The host shared `/collab view`; ask for the full-control link only if you should steer the session. |
-| Browser link opens but does not connect | Confirm the host is still sharing, use the entire current link, and check that a custom `collab.webUrl` serves the omp browser client over HTTPS. |
-| `omp join requires an interactive terminal` | Run it from a TTY, or open the browser link instead. |
-| The guest joins during a response but misses that response | Wait for the next update. If the response produced no update after the join, that one in-flight response may not render live; later transcript and session updates still synchronize. |
+<Accordions>
+<Accordion title="`No relay configured`">
+
+Set `collab.relayUrl` in `/settings`, run `omp config set collab.relayUrl wss://…`, or pass a relay to `/collab`.
+</Accordion>
+<Accordion title="`Stop hosting first`">
+
+Run `/collab stop`, then join the other session.
+</Accordion>
+<Accordion title="`Already in a collab session`">
+
+Run `/leave` before joining another link.
+</Accordion>
+<Accordion title="The guest is read-only">
+
+The host shared `/collab view`; ask for the full-control link only if you should steer the session.
+</Accordion>
+<Accordion title="Browser link opens but does not connect">
+
+Confirm the host is still sharing, use the entire current link, and check that a custom `collab.webUrl` serves the omp browser client over HTTPS.
+</Accordion>
+<Accordion title="`omp join requires an interactive terminal`">
+
+Run it from a TTY, or open the browser link instead.
+</Accordion>
+<Accordion title="The guest joins during a response but misses that response">
+
+Wait for the next update. If the response produced no update after the join, that one in-flight response may not render live; later transcript and session updates still synchronize.
+</Accordion>
+</Accordions>
+
 
 ---
 

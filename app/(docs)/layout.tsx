@@ -1,14 +1,15 @@
-import {RootProvider} from 'fumadocs-ui/provider/next';
-import {DocsSearchDialog} from '@/components/search-dialog';
+import {source} from '@/lib/source';
+import {DocsLayout} from 'fumadocs-ui/layouts/docs';
+import {baseOptions} from '@/lib/layout.shared';
+import {SyncBadge} from '@/components/sync-badge';
+import {DocsProviders} from './providers';
 
 export default function Layout({children}: LayoutProps<'/'>) {
     return (
-        <RootProvider
-            search={{
-                SearchDialog: DocsSearchDialog,
-            }}
-        >
-            <div className="flex flex-col min-h-screen">{children}</div>
-        </RootProvider>
+        <DocsProviders>
+            <DocsLayout tree={source.getPageTree()} {...baseOptions()} sidebar={{footer: <SyncBadge/>}}>
+                {children}
+            </DocsLayout>
+        </DocsProviders>
     );
 }

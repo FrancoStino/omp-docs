@@ -15,7 +15,7 @@ A few useful defaults on a fresh install are:
 - immediate interruption when you steer a running turn
 - compaction and automatic image resizing enabled
 - named model-role changes saved globally (`modelRoleStorage: global`)
-- tool approval mode `yolo` unless a launch mode or runtime flag overrides it; review [Approvals](/docs/approvals) before changing policy
+- tool approval mode `yolo` unless a launch mode or runtime flag overrides it; review [Approvals](approvals) before changing policy
 
 Defaults can evolve. `omp config list` is the authoritative view of the keys and effective values in the version you are running.
 
@@ -68,13 +68,13 @@ omp --profile work config list
 omp --profile work config set theme.dark titanium
 ```
 
-`OMP_PROFILE` is the persistent environment equivalent; `PI_PROFILE` remains a legacy fallback. Keybindings are stored separately and have their own profile inheritance rules; see [Keybindings](/docs/keybindings#remap-shortcuts).
+`OMP_PROFILE` is the persistent environment equivalent; `PI_PROFILE` remains a legacy fallback. Keybindings are stored separately and have their own profile inheritance rules; see [Keybindings](keybindings#remap-shortcuts).
 
 ### Project settings
 
 Create `.omp/config.yml` in the exact directory where you launch omp:
 
-Enabled compatibility providers can also contribute project-level settings from their own formats. They share the project layer; use `omp config get <key>` to inspect the merged result and [Context files](/docs/context-files) to control discovery sources.
+Enabled compatibility providers can also contribute project-level settings from their own formats. They share the project layer; use `omp config get <key>` to inspect the merged result and [Context files](context-files) to control discovery sources.
 
 ```yaml
 # <repo>/.omp/config.yml
@@ -91,7 +91,7 @@ compaction:
 
 `omp config set` does not write arbitrary project settings. Edit this file directly. The one interactive project write is a model-selector role assignment when `modelRoleStorage` is `project`; only `modelRoles` is updated there, and missing project roles continue to fall back to the global profile.
 
-Keep credentials out of committed project YAML. Prefer stored login credentials, environment variables, [secret references](/docs/secrets), or an untracked overlay.
+Keep credentials out of committed project YAML. Prefer stored login credentials, environment variables, [secret references](secrets), or an untracked overlay.
 
 ### One-shot overlays
 
@@ -117,7 +117,7 @@ built-in defaults
   < runtime flags and feature-specific environment overrides
 ```
 
-Examples of runtime overrides include model-role flags such as `--model`, `--smol`, `--slow`, and `--plan`, approval flags, `--hide-thinking`, `--advisor`, `--no-pty`, and `--api-key`. Environment variables are not one universal settings layer: each owning feature decides whether its variable is an override or fallback. See the [environment variable reference](/docs/env).
+Examples of runtime overrides include model-role flags such as `--model`, `--smol`, `--slow`, and `--plan`, approval flags, `--hide-thinking`, `--advisor`, `--no-pty`, and `--api-key`. Environment variables are not one universal settings layer: each owning feature decides whether its variable is an override or fallback. See the [environment variable reference](env).
 
 Mappings deep-merge; scalars and arrays replace:
 
@@ -151,7 +151,7 @@ There is no general `/reload-settings` command. `/reload-plugins` refreshes exte
 
 ### Set model roles
 
-Use `/settings` or the model selector for guided selection, and [Model roles](/docs/roles) for role behavior. YAML is useful when several roles change together:
+Use `/settings` or the model selector for guided selection, and [Model roles](roles) for role behavior. YAML is useful when several roles change together:
 
 ```yaml
 modelRoles:
@@ -172,7 +172,7 @@ followUpMode: one-at-a-time  # or all
 interruptMode: immediate     # or wait
 ```
 
-See [Using omp](/docs/using) for how steering differs from follow-up prompts.
+See [Using omp](using) for how steering differs from follow-up prompts.
 
 ### Set a theme and terminal behavior
 
@@ -186,7 +186,7 @@ tui:
   hyperlinks: auto
 ```
 
-See [Themes](/docs/themes) for built-in and custom palettes.
+See [Themes](themes) for built-in and custom palettes.
 
 ### Limit a repository's providers
 
@@ -197,18 +197,18 @@ disabledProviders:
   - openrouter
 ```
 
-This project array replaces the global array. Provider ids and authentication live in [Providers](/docs/providers).
+This project array replaces the global array. Provider ids and authentication live in [Providers](providers).
 
 ### Configure safety-sensitive features
 
 Start from the interactive controls, then follow the dedicated guides rather than copying a broad policy blindly:
 
-- tool permission policy: [Approvals](/docs/approvals)
-- advisor review: [Advisor](/docs/advisor)
-- desktop automation: [Computer](/docs/computer)
-- security review: [Security](/docs/security)
-- prompt-triggered modes: [Magic keywords](/docs/magic-keywords)
-- pre-execution repository walks: [Prewalk](/docs/prewalk)
+- tool permission policy: [Approvals](approvals)
+- advisor review: [Advisor](advisor)
+- desktop automation: [Computer](computer)
+- security review: [Security](security)
+- prompt-triggered modes: [Magic keywords](magic-keywords)
+- pre-execution repository walks: [Prewalk](prewalk)
 
 ### Configure compaction and memory
 
@@ -220,7 +220,7 @@ memory:
   backend: off
 ```
 
-Compaction has several strategies, thresholds, and background modes; see [Compaction](/docs/compaction). Memory backends and retention are covered in [Memory](/docs/memory).
+Compaction has several strategies, thresholds, and background modes; see [Compaction](compaction). Memory backends and retention are covered in [Memory](memory).
 
 ## Complete setting groups
 
@@ -253,11 +253,12 @@ For exact key discovery, the family index below maps current namespaces to where
 - **Providers and services:** `providers`, `provider`, `disabledProviders`, `secrets`, `live`, `tts`, `speech`, `codexResets`, `exa`, `searxng`, and auth-broker settings under `auth`.
 - **Advanced CLI/YAML-only families:** `extensions`, `disabledExtensions`, `commit`, `gc`, `thinkingBudgets`, plus advanced leaves under `statusLine`, `images`, `tui`, `retry`, `compaction`, `memories`, `autolearn`, `mnemopi`, `hindsight`, `bashInterceptor`, `shellMinimizer`, `eval`, `task`, and `skills`.
 
-Keybinding remaps do not live in this file: use `keybindings.yaml` as described in [Keybindings](/docs/keybindings#remap-shortcuts).
+Keybinding remaps do not live in this file: use `keybindings.yaml` as described in [Keybindings](keybindings#remap-shortcuts).
 
 ## Troubleshooting
 
-### A project value is not taking effect
+<Accordions>
+  <Accordion title="A project value is not taking effect">
 
 1. Run `omp config get <key>` from the directory containing `.omp/config.yml`.
 2. Confirm the project file is in the process's exact working directory; omp does not search parent directories for native project settings.
@@ -265,26 +266,29 @@ Keybinding remaps do not live in this file: use `keybindings.yaml` as described 
 4. Remember that an array in the project replaces the whole global array.
 5. Restart if provider/model/tool discovery was already initialized.
 
-### `omp config set` changed the wrong file
+</Accordion>
+  <Accordion title="`omp config set` changed the wrong file">
 
 It always writes the active global/profile config. Run `omp config path` to identify that agent directory. Edit `<repo>/.omp/config.yml` directly for a project override.
-
-### `omp config reset` appears to do nothing
+</Accordion>
+  <Accordion title="`omp config reset` appears to do nothing">
 
 `reset` writes the built-in default into the global file. A project, overlay, or runtime value can still win. Inspect with `omp config get <key>`, then remove or change the higher layer. To inherit instead of pinning the global default, delete the global YAML key manually.
-
-### Startup reports broken YAML
+</Accordion>
+  <Accordion title="Startup reports broken YAML">
 
 Read the reported error and backup path. Persistent malformed YAML is moved to a unique `.broken-*` sibling before startup stops, preserving the original contents. Repair that backup into a mapping and restore it as `config.yml`. Overlay errors are not moved; fix the overlay in place.
-
-### A key is unknown or a value is rejected
+</Accordion>
+  <Accordion title="A key is unknown or a value is rejected">
 
 Run `omp config list`, copy the exact dotted key, and use one of the displayed enum values. Arrays and records passed to `set` must be valid JSON even though persistent files use YAML.
-
-### An edit is not visible in an existing session
+</Accordion>
+  <Accordion title="An edit is not visible in an existing session">
 
 A separate shell command or editor does not push settings into an already-running session. Start a new session. If you used `/settings`, check whether a project, overlay, or runtime override has higher precedence than the global value you changed.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/settings) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

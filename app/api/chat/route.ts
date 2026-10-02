@@ -1,4 +1,3 @@
-import {createOpenRouter} from '@openrouter/ai-sdk-provider';
 import {createOpenAICompatible} from '@ai-sdk/openai-compatible';
 import {
   convertToModelMessages,
@@ -60,22 +59,25 @@ async function chunkedAll<O>(promises: Promise<O>[]): Promise<O[]> {
     return out;
 }
 
-const customProvider = process.env.AI_BASE_URL
+const nonEmpty = (v: string | undefined): string | undefined =>
+    v != null && v.trim() !== '' ? v : undefined;
+
+const customBaseURL = nonEmpty(process.env.AI_BASE_URL);
+
+const provider = customBaseURL
     ? createOpenAICompatible({
         name: 'custom',
-        apiKey: process.env.AI_API_KEY ?? '',
-        baseURL: process.env.AI_BASE_URL,
+        apiKey: nonEmpty(process.env.AI_API_KEY) ?? '',
+        baseURL: customBaseURL,
     })
     : null;
 
-const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY ?? process.env.AI_API_KEY,
-});
-
 function resolveModel() {
-    const modelId = process.env.AI_MODEL ?? process.env.OPENROUTER_MODEL ?? 'meta-llama/llama-3.1-8b-instruct:free';
-    if (customProvider) return customProvider.chatModel(modelId);
-    return openrouter.chat(modelId);
+    const modelId = nonEmpty(process.env.AI_MODEL);
+    if (provider == null || modelId == null) {
+        throw new Error('Missing AI_BASE_URL/AI_MODEL: set them in .env.local');
+    }
+    return provider.chatModel(modelId);
 }
 
 /** System prompt, you can update it to provide more specific information */
@@ -100,9 +102,12 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(req: Request) {
-    const apiKey = process.env.AI_API_KEY ?? process.env.OPENROUTER_API_KEY;
-    if (apiKey == null) {
-        return Response.json({error: 'Chat disabled: missing AI_API_KEY (or OPENROUTER_API_KEY)'}, {status: 503});
+    const apiKey = nonEmpty(process.env.AI_API_KEY);
+    if (apiKey == null || customBaseURL == null || nonEmpty(process.env.AI_MODEL) == null) {
+        return Response.json(
+            {error: 'Chat disabled: set AI_BASE_URL, AI_API_KEY and AI_MODEL in .env.local'},
+            {status: 503},
+        );
     }
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local';
     if (!checkRateLimit(ip)) {

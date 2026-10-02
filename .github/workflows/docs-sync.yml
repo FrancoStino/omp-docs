@@ -81,15 +81,42 @@ jobs:
             cliff.md
             changed.txt
 
+      - name: Setup Node
+        if: steps.diff.outputs.empty == 'false'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: AI rewrite of touched pages
+        id: ai
+        if: steps.diff.outputs.empty == 'false'
+        env:
+          AI_BASE_URL: ${{ vars.AI_BASE_URL }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+          SYNC_FROM: ${{ steps.range.outputs.last }}
+          SYNC_TO: ${{ steps.range.outputs.to }}
+        run: bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}"
+
+      - name: Build check
+        if: steps.diff.outputs.empty == 'false'
+        run: |
+          bun install --frozen-lockfile
+          bun run lint
+          bun run build
+
       - name: Update state files
         if: steps.diff.outputs.empty == 'false'
         run: |
           TO="${{ steps.range.outputs.to }}"
           echo "$TO" > .docs-sync-state
           printf '{"sha":"%s","date":"%s","source":"upstream-main"}\n' "$TO" "$(date -u +%F)" > public/sync-state.json
-          # NOTE: page regeneration for touched areas is manual or via Jules on the PR branch (see plan Step 7).
-          # Append cliff.md to changelog only when the touched filter includes docs/changelog sources:
-          # manual step — do not auto-edit MDX here.
+          {
+            echo
+            echo "## AI rewrite"
+            echo
+            cat ai-report.md
+          } >> sync-body.md
 
       - name: Open or update rolling PR
         if: steps.diff.outputs.empty == 'false'
@@ -101,6 +128,7 @@ jobs:
           BRANCH="docs/sync-$SHORT"
           git checkout -B "$BRANCH"
           git add .docs-sync-state public/sync-state.json
+          git add content/docs
           git -c user.name="docs-sync" -c user.email="docs-sync@users.noreply.github.com" commit -m "docs: sync upstream $SHORT" || true
           git push -u origin "$BRANCH" --force-with-lease
           BODY="$(cat sync-body.md)"

@@ -9,7 +9,7 @@ Model roles let omp use different models for different kinds of work. You might 
 
 You do not have to configure roles before using omp. After you sign in to a provider, omp automatically chooses usable models for unassigned built-in roles. Start with the defaults, then pin a role only when you want predictable quality, latency, cost, or provider usage.
 
-A role chooses **which model** handles a kind of work; an agent also chooses **how that worker behaves and what it can use**. See [Agents & model roles](/docs/agents-and-roles) when you are deciding which layer to change.
+A role chooses **which model** handles a kind of work; an agent also chooses **how that worker behaves and what it can use**. See [Agents & model roles](agents-and-roles) when you are deciding which layer to change.
 
 The quickest way to make an assignment is:
 
@@ -23,9 +23,9 @@ Most people only need to consider these roles:
 | Role | Configure it when… |
 | --- | --- |
 | `default` | You want to choose the model for normal interactive work. |
-| `smol` | You want lightweight work to favor speed and cost. It is also the usual handoff target for [prewalk](/docs/prewalk). |
+| `smol` | You want lightweight work to favor speed and cost. It is also the usual handoff target for [prewalk](prewalk). |
 | `slow` | You want difficult reasoning and review to use a stronger model. |
-| `plan` | You want [plan mode](/docs/plan) to use a dedicated architect model. |
+| `plan` | You want [plan mode](plan) to use a dedicated architect model. |
 | `vision` | Your main model cannot inspect images, or you want image analysis routed elsewhere. |
 
 ## What happens automatically
@@ -37,73 +37,76 @@ A few defaults are worth knowing:
 - `default` is the main session model.
 - Unassigned `smol`, `slow`, and `designer` roles can use the configured `default` model before omp looks for another suitable model.
 - Unassigned `tiny` work follows the fast-model preference used by `smol`.
-- An unassigned `advisor` seeks a separate strong reasoning model rather than inheriting `default`. See [Advisor](/docs/advisor) for the advisor workflow.
-- If no usable model can satisfy a role, omp skips that route or shows an actionable model/authentication error instead of silently using an unauthenticated provider.
+- An unassigned `advisor` seeks a separate strong reasoning model rather than inheriting `default`. See [Advisor](advisor) for the advisor workflow.
 
-Automatic choices can change as providers, credentials, or the model catalog change. Pin the roles whose behavior must remain stable.
+<Callout type="warn" title="Missing credentials disable roles">
+  If no usable model can satisfy a role, omp skips that route or shows an actionable model/authentication error instead of silently using an unauthenticated provider. Automatic choices can change as providers, credentials, or the model catalog change. Pin the roles whose behavior must remain stable.
+</Callout>
 
-## Assign roles in the model hub
+## Configure roles
 
-`/model` and `Alt`+`M` open the full model hub. Its **Roles** view is the recommended configuration surface because it shows both explicit assignments and automatic choices.
+<Tabs items={['Model hub (interactive)', 'YAML configuration', 'Launch override']}>
+  <Tab value="Model hub (interactive)">
+    `/model` and `Alt`+`M` open the full model hub. Its **Roles** view is the recommended configuration surface because it shows both explicit assignments and automatic choices.
 
-- Selecting a role opens the available model catalog.
-- Selecting a model lets you choose a supported thinking level.
-- Clearing an explicit assignment returns the role to automatic selection.
-- The view also manages the `Ctrl` + `P` quick-cycle order and retry fallback chains.
-- Locked providers lead to sign-in rather than creating an unusable assignment.
+    - Selecting a role opens the available model catalog.
+    - Selecting a model lets you choose a supported thinking level.
+    - Clearing an explicit assignment returns the role to automatic selection.
+    - The view also manages the `Ctrl` + `P` quick-cycle order and retry fallback chains.
+    - Locked providers lead to sign-in rather than creating an unusable assignment.
 
-By default, assignments are global and are saved in the active profile's agent configuration (normally `~/.omp/agent/config.yml`). To allow per-project assignments, set:
+    By default, assignments are global and are saved in the active profile's agent configuration (normally `~/.omp/agent/config.yml`). To allow per-project assignments, set:
 
-```yaml
-modelRoleStorage: project
-```
+    ```yaml
+    modelRoleStorage: project
+    ```
 
-The hub will then ask whether to save an assignment globally or for the current project. Project assignments are written to `.omp/config.yml`; a role missing there continues to use its global assignment.
+    The hub will then ask whether to save an assignment globally or for the current project. Project assignments are written to `.omp/config.yml`; a role missing there continues to use its global assignment.
+  </Tab>
+  <Tab value="YAML configuration">
+    The smallest useful manual configuration is a `modelRoles` map in `~/.omp/agent/config.yml`:
 
-## Configure roles in YAML
+    ```yaml
+    modelRoles:
+      default: anthropic/claude-sonnet-4-6
+      smol: anthropic/claude-haiku-4-5
+      slow: openai-codex/gpt-5.3-codex:high
+      plan: anthropic/claude-opus-4-6:high
+    ```
 
-The smallest useful manual configuration is a `modelRoles` map in `~/.omp/agent/config.yml`:
+    Use `omp models find <name>` to find selectors available in your installation. An explicit `provider/model-id` is the most predictable value. A thinking suffix can be `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, or `auto`; unsupported levels are constrained to what the selected model supports.
 
-```yaml
-modelRoles:
-  default: anthropic/claude-sonnet-4-6
-  smol: anthropic/claude-haiku-4-5
-  slow: openai-codex/gpt-5.3-codex:high
-  plan: anthropic/claude-opus-4-6:high
-```
+    Role values also accept:
 
-Use `omp models find <name>` to find selectors available in your installation. An explicit `provider/model-id` is the most predictable value. A thinking suffix can be `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, or `auto`; unsupported levels are constrained to what the selected model supports.
+    | Form | Meaning | Example |
+    | --- | --- | --- |
+    | Model selector or pattern | Select a matching model. Prefer a full provider-qualified selector in durable config. | `google/gemini-3-pro` |
+    | Ordered selectors | Try comma-separated selectors from left to right and use the first available match. | `anthropic/claude-sonnet-4-6,openai/gpt-5.4` |
+    | Role alias | Reuse another configured role. `@role` is canonical; `*` means `@default`. | `task: "@slow"` |
+    | Thinking suffix | Pin or automatically choose effort for this role. | `openai-codex/gpt-5.3-codex:xhigh` |
 
-Role values also accept:
+    `pi/role` remains accepted as a legacy role alias, but new configuration should use `@role`.
+  </Tab>
+  <Tab value="Launch override">
+    Launch flags and environment variables are useful for an experiment or script. They do not rewrite your saved role assignments.
 
-| Form | Meaning | Example |
-| --- | --- | --- |
-| Model selector or pattern | Select a matching model. Prefer a full provider-qualified selector in durable config. | `google/gemini-3-pro` |
-| Ordered selectors | Try comma-separated selectors from left to right and use the first available match. | `anthropic/claude-sonnet-4-6,openai/gpt-5.4` |
-| Role alias | Reuse another configured role. `@role` is canonical; `*` means `@default`. | `task: "@slow"` |
-| Thinking suffix | Pin or automatically choose effort for this role. | `openai-codex/gpt-5.3-codex:xhigh` |
+    | Target | Shell flag | Environment variable | Precedence |
+    | --- | --- | --- | --- |
+    | Active main model | `--model <selector>` | — | Launch flag |
+    | `smol` | `--smol <selector>` | `PI_SMOL_MODEL` | Flag, then environment, then config/automatic choice |
+    | `slow` | `--slow <selector>` | `PI_SLOW_MODEL` | Flag, then environment, then config/automatic choice |
+    | `plan` | `--plan <selector>` | `PI_PLAN_MODEL` | Flag, then environment, then config/automatic choice |
 
-`pi/role` remains accepted as a legacy role alias, but new configuration should use `@role`.
+    For example:
 
-## Override roles for one launch
+    ```sh
+    omp --model @default --slow openai-codex/gpt-5.3-codex:xhigh
+    PI_SMOL_MODEL=anthropic/claude-haiku-4-5 omp
+    ```
 
-Launch flags and environment variables are useful for an experiment or script. They do not rewrite your saved role assignments.
-
-| Target | Shell flag | Environment variable | Precedence |
-| --- | --- | --- | --- |
-| Active main model | `--model <selector>` | — | Launch flag |
-| `smol` | `--smol <selector>` | `PI_SMOL_MODEL` | Flag, then environment, then config/automatic choice |
-| `slow` | `--slow <selector>` | `PI_SLOW_MODEL` | Flag, then environment, then config/automatic choice |
-| `plan` | `--plan <selector>` | `PI_PLAN_MODEL` | Flag, then environment, then config/automatic choice |
-
-For example:
-
-```sh
-omp --model @default --slow openai-codex/gpt-5.3-codex:xhigh
-PI_SMOL_MODEL=anthropic/claude-haiku-4-5 omp
-```
-
-`--model` chooses the active model for that session; it is not a persistent `modelRoles.default` assignment.
+    `--model` chooses the active model for that session; it is not a persistent `modelRoles.default` assignment.
+  </Tab>
+</Tabs>
 
 ## Switch and verify in a running session
 
@@ -141,7 +144,7 @@ After an assignment, reopen `/model` and inspect **Roles** to verify the model a
 | `commit` | Commit-message generation; commit flows can fall through to other usable roles when this is unassigned. |
 | `tiny` | Very small online classifications, titles, memory support, and speech cleanup; when unassigned it follows the `smol` preference. |
 | `task` | General subagent work when the agent does not request another model. |
-| `advisor` | The independent reasoning model used by [Advisor](/docs/advisor). |
+| `advisor` | The independent reasoning model used by [Advisor](advisor). |
 
 Extensions and authored agents can introduce additional role names. A custom role becomes visible in the model hub when it appears in `modelRoles`, `cycleOrder`, or `modelTags`; the extension or agent must actually refer to that role for work to be routed through it.
 
@@ -210,37 +213,42 @@ Use full provider-qualified selectors in fallback arrays. Every fallback also ne
 | `retry.usageReservePct` | `10` | Remaining coding-plan percentage treated as the reserve margin when usage-aware fallback is enabled. |
 | `retry.usageReservePolicy` | `confirm` | `confirm` asks in interactive sessions (background agents fall back automatically), `auto` always selects the next eligible fallback, and `fail-closed` uses neither reserve quota nor a fallback. |
 
-See [Settings](/docs/settings) for configuration precedence and [Providers](/docs/providers) for credentials and provider-specific model discovery.
+See [Settings](settings) for configuration precedence and [Providers](providers) for credentials and provider-specific model discovery.
 
 ## Troubleshooting
 
-### A role resolves to the same model as another role
+<Accordions>
+  <Accordion title="A role resolves to the same model as another role">
+    That can be automatic behavior, especially for unassigned `smol`, `slow`, or `designer`. Assign the role explicitly in `/model` → **Roles** if you need separation.
+</Accordion>
+  <Accordion title="Ctrl+P says only one role model is available">
+    Open `/model` and check the roles named in `cycleOrder`. Assign at least two to available, authenticated models. The quick cycle skips missing or unusable assignments; `--models` scopes the model catalog for a launch but does not replace `cycleOrder`.
+</Accordion>
+  <Accordion title="A change disappears in another project—or appears everywhere">
+    Check `modelRoleStorage`. With `global`, hub changes apply across projects. With `project`, inspect whether the Roles view saved the assignment to **project** or **global**; `.omp/config.yml` overrides the global value only for that project.
+</Accordion>
+  <Accordion title="omp reports an unknown model or missing API key">
+    Run `omp models find <name>` and use a listed `provider/model-id`, then sign in with `/login` or configure that provider's credential. If a provider has just published a model, run `omp models refresh` before searching again.
+</Accordion>
+  <Accordion title="A fallback never runs">
+    Confirm that `retry.modelFallback` is `true`, that the active role/model has a matching non-empty chain, and that at least one fallback has valid credentials. Role aliases and fuzzy names are useful in `modelRoles`, but fallback arrays should use concrete `provider/model-id` selectors or supported provider wildcards.
+</Accordion>
+  <Accordion title="A fallback runs but does not return to the primary">
+    Set `retry.fallbackRevertPolicy: cooldown-expiry` to return after the primary model's suppression window. With `never`, switch manually using `/switch`, `/model`, or the model keybindings.
+</Accordion>
+  <Accordion title="Image inspection says no vision model is configured">
+    Assign `modelRoles.vision` to a model whose catalog entry supports image input. Merely naming a text-only model in the `vision` slot does not add vision capability.
+</Accordion>
+</Accordions>
 
-That can be automatic behavior, especially for unassigned `smol`, `slow`, or `designer`. Assign the role explicitly in `/model` → **Roles** if you need separation.
+## Related
 
-### Ctrl+P says only one role model is available
-
-Open `/model` and check the roles named in `cycleOrder`. Assign at least two to available, authenticated models. The quick cycle skips missing or unusable assignments; `--models` scopes the model catalog for a launch but does not replace `cycleOrder`.
-
-### A change disappears in another project—or appears everywhere
-
-Check `modelRoleStorage`. With `global`, hub changes apply across projects. With `project`, inspect whether the Roles view saved the assignment to **project** or **global**; `.omp/config.yml` overrides the global value only for that project.
-
-### omp reports an unknown model or missing API key
-
-Run `omp models find <name>` and use a listed `provider/model-id`, then sign in with `/login` or configure that provider's credential. If a provider has just published a model, run `omp models refresh` before searching again.
-
-### A fallback never runs
-
-Confirm that `retry.modelFallback` is `true`, that the active role/model has a matching non-empty chain, and that at least one fallback has valid credentials. Role aliases and fuzzy names are useful in `modelRoles`, but fallback arrays should use concrete `provider/model-id` selectors or supported provider wildcards.
-
-### A fallback runs but does not return to the primary
-
-Set `retry.fallbackRevertPolicy: cooldown-expiry` to return after the primary model's suppression window. With `never`, switch manually using `/switch`, `/model`, or the model keybindings.
-
-### Image inspection says no vision model is configured
-
-Assign `modelRoles.vision` to a model whose catalog entry supports image input. Merely naming a text-only model in the `vision` slot does not add vision capability.
+<Cards>
+  <Card title="Agents & model roles" description="Choose models vs routing slots vs agent profiles" href="agents-and-roles" />
+  <Card title="Prewalk" description="Hand off from capable planner to fast implementer" href="prewalk" />
+  <Card title="Advisor models" description="Pair an independent reviewer model with your session" href="advisor" />
+  <Card title="Providers" description="Connect accounts, keys, and local engines" href="providers" />
+</Cards>
 
 ---
 

@@ -16,8 +16,8 @@ You specify the outcome, scope, and safety conditions. omp chooses and operates 
 omp has three related ways to make code changes:
 
 - **Structural editing** matches a syntactic shape. It can find the same function-call form despite formatting differences and rewrite many instances consistently. Use it for API migrations, repeated expression changes, import-form updates, or removal of a particular statement shape.
-- **Symbol-aware editing** follows the identity of a declaration through references, scope, imports, and re-exports. Ask for this when renaming a real symbol rather than every piece of code with the same spelling. See [Code intelligence](/docs/code-intelligence).
-- **Text or line editing** is best for a small, known location, prose, configuration, or code that has no supported parser. See [Files and editing](/docs/files).
+- **Symbol-aware editing** follows the identity of a declaration through references, scope, imports, and re-exports. Ask for this when renaming a real symbol rather than every piece of code with the same spelling. See [Code intelligence](code-intelligence).
+- **Text or line editing** is best for a small, known location, prose, configuration, or code that has no supported parser. See [Files and editing](files).
 
 A structural match is syntax-aware, not binding-aware. Two unrelated functions named `legacyWrap` can look identical to it. If identity matters, say so:
 
@@ -111,7 +111,7 @@ omp config set astEdit.enabled true
 omp config set astEdit.enabled false
 ```
 
-See [Settings](/docs/settings) for configuration precedence and file locations.
+See [Settings](settings) for configuration precedence and file locations.
 
 A structural pass searches at most 1,000 files by default. Set the positive `PI_MAX_AST_FILES` environment variable before launching omp if a larger repository genuinely needs a different ceiling. Usually the safer response to a limit warning is to narrow the requested directory or glob, not raise the ceiling.
 
@@ -128,30 +128,33 @@ A restricted `--tools` list can also make structural editing unavailable even wh
 
 ## Troubleshooting
 
-### “No replacements made”
+<Accordions>
+  <Accordion title="“No replacements made”">
 
 Ask omp to inspect one concrete example and explain why it did not match. The code may use a different syntax, the path may be too narrow, or symbol-aware editing may be the better operation. Do not broaden to the whole repository until one representative case previews correctly.
-
-### Parse warnings
+</Accordion>
+  <Accordion title="Parse warnings">
 
 Have omp identify the affected files and confirm that they parse in their declared language. Fix broken syntax first, exclude generated or unsupported files, or use a tightly scoped text edit when structural parsing is not appropriate.
+</Accordion>
+  <Accordion title="Too many or unexpected matches">
 
-### Too many or unexpected matches
-
-Reject the proposal. Add import origin, receiver type, enclosing function, package, file glob, or explicit exclusions to the request. If the distinction is symbol identity, request an [LSP-backed rename](/docs/code-intelligence) instead.
-
-### “Limit reached”
+Reject the proposal. Add import origin, receiver type, enclosing function, package, file glob, or explicit exclusions to the request. If the distinction is symbol identity, request an [LSP-backed rename](code-intelligence) instead.
+</Accordion>
+  <Accordion title="“Limit reached”">
 
 Narrow the scope and rerun. The preview is incomplete when the search ceiling is reached, so its count is not a repository-wide total.
-
-### “Preview is stale”
+</Accordion>
+  <Accordion title="“Preview is stale”">
 
 Inspect the current diff because a subset or a changed set of matches may already have been applied. Then ask omp to re-read the files and create a new preview; accept only when the fresh file and replacement counts are expected.
-
-### A `conflict://` reference is unknown or no longer present
+</Accordion>
+  <Accordion title="A `conflict://` reference is unknown or no longer present">
 
 Ask omp to read the conflicted file again. This refreshes the session’s conflict index and avoids applying a decision to a block whose markers or surrounding file have changed.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/editing) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

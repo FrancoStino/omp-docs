@@ -1,41 +1,128 @@
 @import "tailwindcss";
-@import 'fumadocs-ui/css/solar.css';
+@import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
-/* Pi brand tokens (same oklch as logo + omp.sh accents) */
+/* Pi brand tokens (same oklch as logo + omp.sh accents).
+   Plain :root (not @theme inline): --font-geist-sans / --font-jetbrains-mono
+   are runtime variables injected by next/font, so inlining them at build
+   time fails with "Cannot resolve custom property". */
 :root {
   --pi-pink: oklch(0.7 0.24 340);
   --pi-violet: oklch(0.62 0.21 295);
   --pi-cyan: oklch(0.81 0.14 200);
   --pi-gradient: linear-gradient(135deg, var(--pi-pink), var(--pi-violet) 50%, var(--pi-cyan));
+  letter-spacing: -0.25px;
 }
 
-@theme inline {
+@theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Pi brand: override solar primary with the logo gradient tones.
-   Light: violet (readable on light) — Dark: cyan (readable on dark, like omp.sh accent-2).
-   Solar's own primary is oklch blue (262°) which is why you kept seeing blue. */
-@theme {
+/* Pi brand primary: plain CSS after imports so it beats the theme preset.
+   Light: violet — Dark: the same violet, brightened for the dark surface.
+   Cyan is reserved for the logo gradient only. */
+:root {
   --color-fd-primary: oklch(0.55 0.22 295);
 }
 
 .dark {
-  --color-fd-primary: oklch(0.85 0.16 200);
+  --color-fd-primary: oklch(0.72 0.19 300);
   --color-fd-background: #09090b;
-}
-
-/* Solar also tints article/cards — keep them aligned, not blue */
-@theme inline {
   --color-fd-ring: var(--color-fd-primary);
 }
 
-/* Active sidebar link: gradient underline */
+/* Solar-style article surface on the neutral base: raised card around the
+   article, borderless sidebar. Selectors copied from fumadocs-ui/css/solar.css
+   (#nd-docs-layout [data-layout-main]::before, #nd-sidebar). */
+@media (min-width: 768px) {
+  #nd-docs-layout [data-layout-main] {
+    position: relative;
+    padding: 1rem;
+  }
+
+  #nd-docs-layout [data-layout-main]::before {
+    content: '';
+    position: absolute;
+    inset: 1rem;
+    background: var(--color-fd-card);
+    border: 1px solid var(--color-fd-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    z-index: -1;
+  }
+}
+
+#nd-sidebar[data-collapsed='false'] {
+  border: none;
+}
+
+/* The Pi gradient is the accent system. --color-fd-primary stays as the token
+   (icons, ring, any place a flat colour is needed); everywhere the accent is
+   painted as text or a surface it uses the logo ramp instead. */
+.bg-fd-primary {
+  background-image: var(--pi-gradient);
+  color: oklch(0.16 0.03 295);
+}
+
+/* Black sidebar: always dark, in light and dark mode, with a hairline to the
+   content. Values live on :root so both the theme tokens and #nd-sidebar see them. */
+:root,
+.dark {
+  --color-fd-sidebar: #0b0b0e;
+  --color-fd-sidebar-foreground: #ececf1;
+  --color-fd-sidebar-border: #1c1c22;
+  --color-fd-sidebar-primary: #b786ff;
+  --color-fd-sidebar-primary-foreground: #0b0b0e;
+  --color-fd-sidebar-accent: #17171d;
+  --color-fd-sidebar-accent-foreground: #ffffff;
+}
+
+#nd-sidebar {
+  background-color: var(--color-fd-sidebar);
+  color: var(--color-fd-sidebar-foreground);
+}
+
+#nd-sidebar a,
+#nd-sidebar button,
+#nd-sidebar span {
+  color: inherit;
+}
+
+/* Active link: gradient painted onto the text */
 [data-sidebar] a[data-active='true'] {
   background-image: var(--pi-gradient);
-  background-size: 100% 2px;
-  background-position: bottom;
-  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Code blocks wrap instead of scrolling horizontally. Fumadocs renders
+   <pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line">…,
+   so both the min-width and the nowrap have to be undone for wrapping to apply. */
+figure pre {
+  min-width: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+figure pre code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+figure pre code > .line {
+  display: block;
+  min-width: 0;
+}
+
+/* Search term highlight uses the same ramp */
+mark {
+  background-image: var(--pi-gradient);
+  color: oklch(0.16 0.03 295);
+  border-radius: 3px;
+  padding-inline: 3px;
 }

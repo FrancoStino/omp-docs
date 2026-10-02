@@ -1,15 +1,15 @@
 'use client';
 import {
-  type ComponentProps,
-  createContext,
-  type ReactNode,
-  type SyntheticEvent,
-  use,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useRef,
-  useState,
+    type ComponentProps,
+    createContext,
+    type ReactNode,
+    type SyntheticEvent,
+    use,
+    useEffect,
+    useEffectEvent,
+    useMemo,
+    useRef,
+    useState,
 } from 'react';
 import {flushSync} from 'react-dom';
 import {Loader2, MessageCircleIcon, RefreshCw, SearchIcon, Send, X} from 'lucide-react';
@@ -364,56 +364,31 @@ export function AISearchPanel() {
     const [actualOpen, setActualOpen] = useState(open);
     useHotKey();
 
-    if (open && !actualOpen) setActualOpen(open);
+    if (open && !actualOpen) setActualOpen(true);
 
     return (
         <>
-            <style>
-                {`
-        @keyframes ask-ai-open {
-          from {
-            translate: 100% 0;
-          }
-          to {
-            translate: 0 0;
-          }
-        }
-        @keyframes ask-ai-close {
-          from {
-            width: var(--ai-chat-width);
-          }
-          to {
-            width: 0px;
-          }
-        }`}
-            </style>
             {actualOpen && (
                 <div
-                    className={cn(
-                        'fixed inset-0 z-30 backdrop-blur-xs bg-fd-overlay lg:hidden',
-                        open ? 'animate-fd-fade-in' : 'animate-fd-fade-out',
-                    )}
+                    className="fixed inset-0 z-50 bg-fd-overlay backdrop-blur-xs animate-fd-fade-in"
                     onClick={() => setOpen(false)}
-                    onAnimationEnd={() => {
-                        if (!open) flushSync(() => setActualOpen(false));
-                    }}
                 />
             )}
             {actualOpen && (
                 <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Ask AI"
                     className={cn(
-                        'overflow-hidden z-30 bg-fd-card text-fd-card-foreground [--ai-chat-width:400px] 2xl:[--ai-chat-width:460px]',
-                        'max-lg:fixed max-lg:inset-x-2 max-lg:inset-y-4 max-lg:border max-lg:rounded-2xl max-lg:shadow-xl',
-                        'lg:sticky lg:top-0 lg:h-dvh lg:border-s lg:ms-auto lg:in-[#nd-docs-layout]:[grid-area:toc] lg:in-[#nd-notebook-layout]:row-span-full lg:in-[#nd-notebook-layout]:col-start-5',
-                        open
-                            ? 'animate-fd-dialog-in lg:animate-[ask-ai-open_200ms]'
-                            : 'animate-fd-dialog-out lg:animate-[ask-ai-close_200ms]',
+                        'fixed inset-x-2 inset-y-4 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden',
+                        'rounded-2xl border bg-fd-card text-fd-card-foreground shadow-2xl',
+                        open ? 'animate-fd-dialog-in' : 'animate-fd-dialog-out',
                     )}
                     onAnimationEnd={() => {
                         if (!open) flushSync(() => setActualOpen(false));
                     }}
                 >
-                    <div className="flex flex-col size-full p-2 lg:p-3 lg:w-(--ai-chat-width)">
+                    <div className="flex size-full flex-col p-2">
                         <AISearchPanelHeader/>
                         <AISearchPanelList className="flex-1"/>
                         <div

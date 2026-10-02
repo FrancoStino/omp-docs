@@ -213,7 +213,7 @@ Run `/marketplace installed` to confirm the ID and scope, then `/reload-plugins`
 
 ## Publish a marketplace
 
-A marketplace author publishes a Git repository with a catalog and one or more installable [plugin trees](/docs/plugins):
+A marketplace author publishes a Git repository with a catalog and one or more installable [plugin trees](plugins):
 
 ```text
 my-marketplace/
@@ -259,11 +259,9 @@ Then push the repository and share its `owner/repo` shorthand. Consumers can ins
 
 ## Related
 
-- [Plugins](/docs/plugins) — plugin layout, loading, and lifecycle.
-- [Skills](/docs/skills) — on-demand playbooks that plugins can ship.
-- [Hooks](/docs/hooks) — automatic lifecycle code to inspect before installation.
-- [Custom tools](/docs/custom-tools) — executable capabilities a plugin can add.
-
----
-
-Source: [omp.sh](https://omp.sh/docs/marketplace) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+<Cards>
+  <Card title="Plugins" description="plugin layout, loading, and lifecycle" href="plugins" />
+  <Card title="Skills" description="on-demand playbooks that plugins can ship" href="skills" />
+  <Card title="Hooks" description="automatic lifecycle code to inspect before installation" href="hooks" />
+  <Card title="Custom tools" description="executable capabilities a plugin can add" href="custom-tools" />
+</Cards>

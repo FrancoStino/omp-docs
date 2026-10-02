@@ -215,6 +215,8 @@ This preserves your control over scope and avoids converting a mistaken or low-c
 
 ## Headless use
 
+<Callout type="warn">
+
 Without an interactive UI, `/review` cannot show the mode chooser. A plain command requests a focused review of recent code changes, and trailing words become its focus:
 
 ```sh
@@ -228,6 +230,8 @@ omp -p "/review https://github.com/acme/widgets/pull/418 focus on API compatibil
 ```
 
 An explicit valid PR URL is fetched directly in both interactive and headless use. Without one, headless mode does not offer base-branch or commit selection; make the surrounding prompt identify the intended recent changes, or run the interactive TUI when you need one of those choosers. Review output remains read-only, so a CI script must decide separately whether and how a verdict affects its exit or merge policy.
+
+</Callout>
 
 ## Troubleshooting
 

@@ -13,7 +13,7 @@ Usually, you only need to install the language server for your language, start `
 Rename `issueToken` to `mintToken` across the project. Preview the language-server changes before applying them.
 ```
 
-omp can also find definitions and implementations, inspect inferred types, list references, report diagnostics, apply server-provided fixes, and rename files while updating imports. For syntax-based changes that do not center on a symbol, use [structural edits](/docs/editing) instead.
+omp can also find definitions and implementations, inspect inferred types, list references, report diagnostics, apply server-provided fixes, and rename files while updating imports. For syntax-based changes that do not center on a symbol, use [structural edits](editing) instead.
 
 ## What works automatically
 
@@ -159,7 +159,7 @@ An omitted, zero, or negative `idleTimeoutMs` leaves idle shutdown disabled.
 
 ## LSP settings
 
-Open `/settings`, then use the **Files → LSP** group to change these interactively. Persistent settings can also go in user `~/.omp/agent/config.yml` or project `.omp/config.yml`; see [Settings](/docs/settings) for profiles and precedence.
+Open `/settings`, then use the **Files → LSP** group to change these interactively. Persistent settings can also go in user `~/.omp/agent/config.yml` or project `.omp/config.yml`; see [Settings](settings) for profiles and precedence.
 
 | Setting | Default | Effect |
 | --- | --- | --- |
@@ -198,7 +198,8 @@ A partial override of a built-in server may omit inherited fields. A new server 
 
 ## Troubleshooting
 
-### No server appears in the welcome panel or `/session`
+<Accordions>
+  <Accordion title="No server appears in the welcome panel or `/session`">
 
 - Launch omp from the directory containing the expected root marker; discovery does not search parents.
 - Confirm the binary is installed where omp can resolve it. For example, run `command -v rust-analyzer` or inspect the project's local bin directory.
@@ -206,20 +207,23 @@ A partial override of a built-in server may omit inherited fields. A new server 
 - Check the config filename and syntax. Unreadable or invalid JSON/YAML is ignored so other sources can continue loading.
 - If several Python or JavaScript servers are installed, disable the ones you do not want so server selection is unambiguous.
 
-### A server is `available`, but nothing has started
+</Accordion>
+  <Accordion title="A server is `available`, but nothing has started">
 
 This is normal with `lsp.lazy: true`. Ask for a definition, references, rename, or diagnostics on a matching file. Set `lsp.lazy: false` if you prefer background startup when the interactive session opens.
-
-### Startup fails or diagnostics stay empty
+</Accordion>
+  <Accordion title="Startup fails or diagnostics stay empty">
 
 Ask omp to report which server it selected, reload it, and show the startup error. Verify the configured command and arguments outside omp. Also confirm that the file extension is in `fileTypes` and that the file belongs to the project described by the server's root marker.
 
 A server marked `isLinter` can provide formatting, diagnostics, and fixes but not definitions, references, or semantic renames. Compiler and test output may also catch workspace or build-system errors that an LSP does not report.
-
-### A rename is refused or misses text
+</Accordion>
+  <Accordion title="A rename is refused or misses text">
 
 Built-ins, external declarations, generated files, and string-only property names may not be renameable. Ask omp to show references first, then use targeted or structural edits for non-semantic occurrences. Always review the diff and run the relevant compiler or tests after a cross-project rename.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/code-intelligence) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

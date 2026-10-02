@@ -98,7 +98,7 @@ omp config set magicKeywords.orchestrate true
 omp config set magicKeywords.workflow true
 ```
 
-The setting name is `magicKeywords.workflow`, even though the prompt word is `workflowz`. Run `omp config list` and inspect the `magicKeywords.*` values to verify the effective configuration. Configuration scopes and precedence are covered in [Settings](/docs/settings).
+The setting name is `magicKeywords.workflow`, even though the prompt word is `workflowz`. Run `omp config list` and inspect the `magicKeywords.*` values to verify the effective configuration. Configuration scopes and precedence are covered in [Settings](settings).
 
 Disabling the global switch stops the editor's animation, but recognized words can remain statically colored in the editor and sent messages. Per-keyword switches do not control highlighting. Therefore, verify enablement through `/settings` or `omp config list`, not color alone.
 
@@ -114,22 +114,25 @@ Use `/usage` or `omp stats` to inspect usage instead of assuming that faster wal
 
 ## Troubleshooting
 
-### The word is not highlighted
+<Accordions>
+  <Accordion title="The word is not highlighted">
 
 Check the lowercase spelling and the boundaries around it. Remove code formatting, a path or extension, identifier characters, `::`, or immediate parentheses. Highlighting is a terminal UI affordance; do not rely on it in one-shot or protocol output.
-
-### The word is highlighted but behavior did not change
+</Accordion>
+  <Accordion title="The word is highlighted but behavior did not change">
 
 Check **Interaction → Magic Keywords** or `omp config list`. The global and matching per-keyword switches must both be on. For `orchestrate`, confirm the task capability in `/tools`; for `workflowz`, confirm both task and evaluation capabilities. Highlighting alone does not prove that behavior was injected.
-
-### `ultrathink` did not change the displayed thinking level
+</Accordion>
+  <Accordion title="`ultrathink` did not change the displayed thinking level">
 
 Its maximum-effort override applies when automatic thinking is active and is limited to levels supported by the current model. With a manually selected thinking level, it still steers the turn toward care but does not replace that selection.
-
-### Too many agents ran or usage was higher than expected
+</Accordion>
+  <Accordion title="Too many agents ran or usage was higher than expected">
 
 Use a narrower prompt, name the genuinely independent slices, or omit the keyword for work that is sequential or small. Disable the individual keyword if you want mentions to remain ordinary prose while keeping the other shortcuts available.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/magic-keywords) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

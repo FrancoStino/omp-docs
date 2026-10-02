@@ -155,7 +155,8 @@ The `/extensions` dashboard is the authoritative check; the summary is useful fo
 
 ## Troubleshooting
 
-### The file does not appear
+<Accordions>
+  <Accordion title="The file does not appear">
 
 - Check the exact capitalization: the supported names are case-sensitive on case-sensitive filesystems.
 - Confirm omp was launched from the intended directory. Providers marked “Launch directory only” do not walk to a parent repository.
@@ -163,22 +164,25 @@ The `/extensions` dashboard is the authoritative check; the summary is useful fo
 - For `.omp/AGENTS.md` and `.omp/RULES.md`, inspect the nearest `.omp` directory first. A nearer project configuration directory defines the native project scope.
 - If a named profile is active, check its profile-specific `agent/` directory instead of the default `~/.omp/agent/`.
 
-### The file appears as shadowed
+</Accordion>
+  <Accordion title="The file appears as shadowed">
 
 A higher-priority provider supplied a context file at the same scope. The inspector names both sources. Remove the duplicate, move genuinely narrower instructions into a nested directory, or disable the unwanted provider from `/extensions`.
 
 Provider switches persist through the `disabledProviders` setting. Common IDs are listed in the table above; disabling `agents-md`, for example, stops standalone `AGENTS.md` discovery while leaving `.omp/AGENTS.md` available.
-
-### Sticky rules are missing
+</Accordion>
+  <Accordion title="Sticky rules are missing">
 
 `RULES.md` must be in the active user `agent/` directory or in the nearest project `.omp/` directory. The `--no-rules` flag disables `RULES.md` and all other discovered rules for that run.
-
-### An import remains as `@path`
+</Accordion>
+  <Accordion title="An import remains as `@path`">
 
 Resolve the path relative to the importing file, check file permissions, and make sure the token is outside inline or fenced code. A cycle or a chain beyond five recursive hops also leaves an import unexpanded.
 
-See [CLI reference](/docs/cli) for prompt and rule flags, [Settings](/docs/settings) for `disabledProviders`, and `/extensions` for discovered conditional rule files.
+See [CLI reference](cli) for prompt and rule flags, [Settings](settings) for `disabledProviders`, and `/extensions` for discovered conditional rule files.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/context-files) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

@@ -32,11 +32,18 @@ A custom theme is one JSON file in the active agent directory:
 
 Project-local theme files are not scanned. The filename without `.json` is the selection name; use the same value for the JSON `name`. A bundled theme wins if its name collides with a custom file.
 
-Create the directory, then save the complete minimal theme below as `~/.omp/agent/themes/ink.json`:
+<Steps>
+### Create the themes directory
+
+Create the directory in the active agent location:
 
 ```sh
 mkdir -p ~/.omp/agent/themes
 ```
+
+### Save the theme file
+
+Save the complete minimal theme below as `~/.omp/agent/themes/ink.json`:
 
 ```json
 {
@@ -135,7 +142,10 @@ mkdir -p ~/.omp/agent/themes
 }
 ```
 
+### Select the theme in settings
+
 Open `/settings` after installing the file and select `ink` for **Dark Theme**. If the settings list was already open when you created the file, close and reopen it; restart omp if the new name still does not appear. To use a custom light palette, design it against a light terminal background and select it for **Light Theme** instead.
+</Steps>
 
 ## File format and color values
 
@@ -208,22 +218,38 @@ Before keeping a theme, inspect normal conversation text, selected rows, Markdow
 
 ## Troubleshooting
 
-**The theme is not listed.** Check that the file is directly inside the active agent’s `themes` directory, ends in `.json`, and was present when the settings list was opened. A project `.omp/themes` directory is not a theme source.
+<Accordions>
+<Accordion title="The theme is not listed">
+Check that the file is directly inside the active agent’s `themes` directory, ends in `.json`, and was present when the settings list was opened. A project `.omp/themes` directory is not a theme source.
+</Accordion>
 
-**A different theme loads.** Do not reuse a bundled name: bundled themes take precedence. Also check whether you changed the dark slot while omp currently detects a light background, or vice versa.
+<Accordion title="A different theme loads">
+Do not reuse a bundled name: bundled themes take precedence. Also check whether you changed the dark slot while omp currently detects a light background, or vice versa.
+</Accordion>
 
-**Selection reports missing colors.** Custom themes require the full token set above. `thinkingMax` alone is optional.
+<Accordion title="Selection reports missing colors">
+Custom themes require the full token set above. `thinkingMax` alone is optional.
+</Accordion>
 
-**Selection reports an invalid color or variable.** Use `#RRGGBB`, `0`–`255`, `""`, or a resolvable `vars` name. Check JSON syntax, missing variables, and reference cycles.
+<Accordion title="Selection reports an invalid color or variable">
+Use `#RRGGBB`, `0`–`255`, `""`, or a resolvable `vars` name. Check JSON syntax, missing variables, and reference cycles.
+</Accordion>
 
-**Startup falls back to `dark`.** The configured theme could not be found or validated. Repair the selected file or choose a bundled theme in `/settings`; a failed initial load uses the built-in `dark` fallback.
+<Accordion title="Startup falls back to dark">
+The configured theme could not be found or validated. Repair the selected file or choose a bundled theme in `/settings`; a failed initial load uses the built-in `dark` fallback.
+</Accordion>
 
-**A save does not repaint.** Live reload only watches the currently active custom file. Select it first, then save valid JSON. If an editor replaced or removed the file temporarily, save it once more after the final file exists.
+<Accordion title="A save does not repaint">
+Live reload only watches the currently active custom file. Select it first, then save valid JSON. If an editor replaced or removed the file temporarily, save it once more after the final file exists.
+</Accordion>
+</Accordions>
 
 ## Related
 
-- [Settings](/docs/settings) — configuration file locations and appearance settings.
-- [Plugins](/docs/plugins) — extension installation and other customization surfaces.
+<Cards>
+  <Card href="settings" title="Settings" description="Configuration file locations and appearance settings." />
+  <Card href="plugins" title="Plugins" description="Extension installation and other customization surfaces." />
+</Cards>
 
 ---
 

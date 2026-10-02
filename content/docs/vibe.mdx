@@ -48,7 +48,7 @@ Coordinate these in parallel:
 3. When both finish, read their changed files, check that the contracts agree, and have the good worker review the integration.
 
 Do not let both workers edit the same file. Stop and ask me if the shared interface must change.
-```
+
 
 Include these details whenever they matter:
 
@@ -137,7 +137,7 @@ The defaults follow omp's normal worker routing:
 - `fast` uses the bundled `sonic` worker and normally resolves through the small-model role;
 - `good` uses the bundled `task` worker and normally resolves through the task role or the active/default model fallback.
 
-Set concrete selectors in roles and route the two worker definitions to them in [`~/.omp/agent/config.yml`](/docs/settings):
+Set concrete selectors in roles and route the two worker definitions to them in [`~/.omp/agent/config.yml`](settings):
 
 ```yaml
 modelRoles:
@@ -154,9 +154,11 @@ This keeps the user-facing `fast` and `good` choices stable while allowing you t
 
 ## Safety and permissions
 
-Workers are full coding agents: they may read and write files, run commands, and use other enabled capabilities needed by their brief. The director's read-only posture does not make the workers read-only.
+<Callout type="warn" title="Workers are full coding agents">
+  Workers may read and write files, run commands, and use other enabled capabilities needed by their brief. The director's read-only posture does not make the workers read-only.
 
-A worker runs headlessly after dispatch, so do not rely on an interactive confirmation appearing for every command it executes. Your configured per-tool policies still apply. Use explicit `deny` policies for capabilities a worker must never use, keep credentials and sensitive paths outside its scope, and give the prompt its own boundaries. See [Settings](/docs/settings) for `tools.approval` and approval modes.
+  A worker runs headlessly after dispatch, so do not rely on an interactive confirmation appearing for every command it executes. Your configured per-tool policies still apply. Use explicit `deny` policies for capabilities a worker must never use, keep credentials and sensitive paths outside its scope, and give the prompt its own boundaries. See [Settings](settings) for `tools.approval` and approval modes.
+</Callout>
 
 Before using Vibe on sensitive code:
 
@@ -166,7 +168,9 @@ Before using Vibe on sensitive code:
 - require focused verification and a final director read-through;
 - stop a worker immediately if its activity or output no longer matches the brief.
 
-Starting several workers increases both the number of actors that can mutate the tree and the chance of overlapping edits. Commit or otherwise preserve important work before a high-concurrency run, but do not ask multiple workers to manipulate the same Git state concurrently.
+<Callout type="warn" title="Concurrent workers mutate the same tree">
+  Starting several workers increases both the number of actors that can mutate the tree and the chance of overlapping edits. Commit or otherwise preserve important work before a high-concurrency run, but do not ask multiple workers to manipulate the same Git state concurrently.
+</Callout>
 
 ## Troubleshooting
 

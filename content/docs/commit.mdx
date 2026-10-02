@@ -77,7 +77,12 @@ Generated headers use Conventional Commit form:
 
 Supported types are `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build`, `ci`, `chore`, `style`, and `revert`. The optional scope is validated, the summary is normalized to remove a duplicate type prefix, must fit within 72 characters, and must begin with a past-tense verb. Type-specific checks reject clear mismatches such as `docs` without documentation files or `test` without test files. A message body, when present, is a short bullet list of important details. Invalid proposals are not executed.
 
+<Callout type="warn">
+
 Warnings such as a vague phrase, an oversized detail list, or weak evidence for a `perf` type are shown before committing; they do not by themselves block a valid proposal.
+
+</Callout>
+
 
 ## Changelog updates
 

@@ -25,7 +25,7 @@ Goal mode works well when:
 - omp can make routine decisions without asking after every step; and
 - you can express safety boundaries up front.
 
-Use a normal prompt for a focused change that should fit in one turn. Use [Plan mode](/docs/plan) when you want to review an approach before any implementation. Do not leave a goal unattended for production changes, destructive operations, credential work, or ambiguous product decisions; require confirmation for those actions in the objective.
+Use a normal prompt for a focused change that should fit in one turn. Use [Plan mode](plan) when you want to review an approach before any implementation. Do not leave a goal unattended for production changes, destructive operations, credential work, or ambiguous product decisions; require confirmation for those actions in the objective.
 
 A strong objective names the deliverables, evidence of completion, and prohibited shortcuts. For example:
 
@@ -106,6 +106,8 @@ This is stronger than merely reaching the end of a turn, but it is not a substit
 
 ## Persistence and recovery
 
+<Callout type="info">
+
 The objective, status, budget, token usage, and active time are stored with the session as work proceeds. Compaction does not discard the goal. Switching away from and back to the same session in a running TUI preserves an active goal; reopening a persisted session from a cold start restores an active goal as **paused** so it cannot resume unattended. Use `/goal show`, review the working tree, then `/goal resume`.
 
 Explicitly paused goals remain available in the session until resumed or dropped. Dropping removes the live goal record, while accumulated usage remains in the session log. Completion clears the live mode and writes a completion record.
@@ -122,6 +124,8 @@ Use this recovery checklist when work stops unexpectedly:
 | “Goal mode is disabled” | Enable `goal.enabled`, then retry `/goal`. |
 
 Automatic continuation is currently an interactive-mode behavior. Loop mode also takes control of automatic submissions, so do not combine `/loop` with a goal when you expect goal-driven continuation.
+
+</Callout>
 
 ## Configuration
 
@@ -149,7 +153,7 @@ omp config get goal.statusInFooter
 omp config get goal.continuationModes
 ```
 
-See [Settings](/docs/settings) for file precedence and configuration commands, and [Slash commands](/docs/slash) for the complete command index.
+See [Settings](settings) for file precedence and configuration commands, and [Slash commands](slash) for the complete command index.
 
 ---
 

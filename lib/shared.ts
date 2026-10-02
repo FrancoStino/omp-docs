@@ -1,7 +1,8 @@
 import {createGetUrl} from 'fumadocs-core/source';
 
-export const docsRoute = '/docs';
-export const docsContentRoute = '/llms.mdx/docs';
+// Docs live at the site root: https://example.com/quickstart, not /docs/quickstart
+export const docsRoute = '/';
+export const docsContentRoute = '/llms.mdx';
 
 const getContentUrl = createGetUrl(docsContentRoute);
 

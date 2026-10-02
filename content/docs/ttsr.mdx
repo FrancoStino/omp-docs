@@ -11,7 +11,7 @@ Use TTSR for guidance that is:
 - specific enough to detect reliably; and
 - most useful *before* the proposed tool call runs.
 
-This is better than [always-on context](/docs/context-files) when the instruction is narrow or rarely relevant. Always-on context is better for conventions the agent must consider throughout every task, because TTSR is reactive: it cannot help until its condition appears.
+This is better than [always-on context](context-files) when the instruction is narrow or rarely relevant. Always-on context is better for conventions the agent must consider throughout every task, because TTSR is reactive: it cannot help until its condition appears.
 
 ## Create the smallest useful rule
 
@@ -194,22 +194,26 @@ Start a new session after changing TTSR configuration so discovery and session s
 - Interrupt before the unsafe fragment is complete. A TTSR match cannot undo a tool call that already finished.
 - Keep regexes linear and specific. Avoid nested, ambiguous repetition such as `(.*)+`, which can become expensive as output grows.
 - Prefer `astCondition` for structural code rules, but constrain it by tool and extension; structural matching costs more than a simple regex.
-- Do not put secrets in rule bodies. The body is sent to the selected model when the rule fires and may be retained in the session.
 - Run `omp ttsr scan` before enabling a broad repository rule. Review matches rather than treating every textual occurrence as a violation.
 - Use `interruptMode: never` only when it is acceptable for the matched tool action to execute.
 
+<Callout type="warn">
+Do not put secrets in rule bodies. The body is sent to the selected model when the rule fires and may be retained in the session.
+</Callout>
+
 ## Troubleshooting
 
-### `omp ttsr list` does not show the rule
-
+<Accordions>
+<Accordion title="omp ttsr list does not show the rule">
 - Confirm the file is `.md` or `.mdc` in `.omp/rules/` or the active profile's `rules/` directory.
 - Ensure frontmatter begins at the first line, has closing `---`, and contains a non-empty `condition` or `astCondition`.
 - Check `omp config get ttsr.enabled`, `omp config get ttsr.disabledRules`, and `omp config get ttsr.builtinRules`.
 - Look for another discovered rule with the same filename-derived name.
 - Start a new session after editing the file.
 
-### The isolated test does not trigger
+</Accordion>
 
+<Accordion title="The isolated test does not trigger">
 Run with `--verbose` and reproduce the live context exactly:
 
 ```bash
@@ -218,24 +222,28 @@ omp ttsr test --verbose --rule .omp/rules/no-box-leak.md \
 ```
 
 Check regex escaping, tool name, `scope`, top-level `globs`, and path extension. An AST rule without `--source tool` and a file extension cannot infer a language. Invalid regex and AST patterns are ignored rather than stopping session startup.
+</Accordion>
 
-### The test triggers but a live session does not
-
+<Accordion title="The test triggers but a live session does not">
 The session may have loaded the previous file, the rule may already have fired under `repeatMode: once`, or the live action may use a different tool/path surface. Start a fresh session, inspect with `omp ttsr list`, and test with the same `--source`, `--tool`, and `--path`.
+</Accordion>
 
-### The rule fires too often
-
+<Accordion title="The rule fires too often">
 Narrow `condition`, add a tool/path `scope`, or add `globs`. Use `ttsr.disabledRules` as an immediate off switch while revising it. Do not solve false positives by making the body vague—the trigger should identify the violation.
+</Accordion>
 
-### The partial response remains visible
-
+<Accordion title="The partial response remains visible">
 Check `omp config get ttsr.contextMode`. Set it back to `discard` for clean retries. Also check whether the rule or global `interruptMode` is `never` for that surface; non-interrupting matches intentionally allow the current response or tool to finish.
+</Accordion>
+</Accordions>
 
 ## Related
 
-- [Context files](/docs/context-files) — guidance that belongs in every prompt.
-- [Hooks](/docs/hooks) — deterministic interception around tool execution.
-- [Skills](/docs/skills) — on-demand playbooks selected for a task.
+<Cards>
+  <Card href="context-files" title="Context files" description="Guidance that belongs in every prompt." />
+  <Card href="hooks" title="Hooks" description="Deterministic interception around tool execution." />
+  <Card href="skills" title="Skills" description="On-demand playbooks selected for a task." />
+</Cards>
 
 ---
 

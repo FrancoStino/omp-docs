@@ -246,6 +246,8 @@ A cloud pull fetches attributed findings, converts them to omp's canonical forma
 
 ## Privacy, credentials, and recovery
 
+<Callout type="error">
+
 - **Provider boundary:** Native review sends prompts and inspected repository material to the active model's provider. Cloud commands send repository configuration to ChatGPT's Codex Security service, and that service performs the remote scan. Choose accounts and services authorized for the repository.
 - **Credential boundary:** The plan stores a reference to one OAuth row and recorded identity, not a license to rotate through sibling accounts. Refresh stays on that row. If the credential disappears, changes identity, expires beyond refresh, or the pinned model becomes unavailable, the scan fails instead of falling back. Log in or pin the intended account, select an available model, and create a new plan.
 - **Artifact boundary:** Findings, reports, SARIF, coverage, and provenance can expose paths, vulnerable flows, and remediation details. Default state and generated files receive restrictive POSIX modes, but they are not a substitute for encrypted storage, careful backups, and access control. Turning the feature off does not delete stored scans or exported files.
@@ -258,3 +260,5 @@ A cloud pull fetches attributed findings, converts them to omp's canonical forma
 ---
 
 Source: [omp.sh](https://omp.sh/docs/security) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+
+</Callout>

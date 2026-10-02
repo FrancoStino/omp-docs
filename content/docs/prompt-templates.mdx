@@ -111,7 +111,7 @@ At session startup, omp recursively discovers Markdown files in these locations:
 
 Only the final filename becomes the command name. Both `.omp/prompts/frontend/review.md` and `.omp/prompts/backend/review.md` define `/review`, not namespaced commands. Give every template a unique filename even when you organize files into subdirectories.
 
-Prompt templates are Markdown prompts, not executable command modules. If a command needs to run custom program logic or display its own UI, build an [extension](/docs/extension-authoring) instead.
+Prompt templates are Markdown prompts, not executable command modules. If a command needs to run custom program logic or display its own UI, build an [extension](extension-authoring) instead.
 
 ## Precedence
 
@@ -125,7 +125,8 @@ Prompt templates are read when the session starts. omp does not watch these file
 
 ## Troubleshooting
 
-### The command is missing from autocomplete
+<Accordions>
+  <Accordion title="The command is missing from autocomplete">
 
 - Confirm the file ends in `.md` and is under `.omp/prompts/` for the current working directory or `~/.omp/agent/prompts/` for your user.
 - Start a new session after changing the file.
@@ -133,17 +134,21 @@ Prompt templates are read when the session starts. omp does not watch these file
 - Try a more distinctive filename in case a built-in, skill, extension, custom, or file-based command already owns the name.
 - Check the session logs for a prompt-template warning. Invalid YAML frontmatter or an unreadable file can prevent that template from loading.
 
-### Arguments expand unexpectedly
+</Accordion>
+  <Accordion title="Arguments expand unexpectedly">
 
 - Quote an argument that contains spaces: `/review-change auth "error handling"`.
 - Do not rely on backslash escapes inside quoted arguments; they are treated literally rather than as an escape mechanism.
 - Remember that `$@` includes every argument, including `$1`. Use `$@[2:]` for only the remainder.
 - Add an explicit placeholder if you need to control where arguments appear. Without one, omp appends them after the template body.
 
-### The project template does not override my user template
+</Accordion>
+  <Accordion title="The project template does not override my user template">
 
 This is the current precedence rule: user templates load first. Rename one of the files, or remove the user-level duplicate, then start a new session.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/prompt-templates) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

@@ -63,7 +63,7 @@ omp plugin install --scope user name@marketplace
 # or: omp plugin install --scope project name@marketplace
 ```
 
-See [Marketplace](/docs/marketplace) for adding catalogs, inspecting packages, pinning, upgrading, and uninstalling plugins. After copying, installing, upgrading, or editing a skill, start a new session or run `/reload-plugins`. Plugin modules, hooks, or tools bundled beside a skill can still require a full restart.
+See [Marketplace](marketplace) for adding catalogs, inspecting packages, pinning, upgrading, and uninstalling plugins. After copying, installing, upgrading, or editing a skill, start a new session or run `/reload-plugins`. Plugin modules, hooks, or tools bundled beside a skill can still require a full restart.
 
 ## Scope and trust
 
@@ -79,6 +79,8 @@ Treat a skill like code:
 Skills with the same name do not merge. An explicitly configured custom directory overrides default discovery locations. Otherwise omp keeps the highest-priority provider: native `.omp`, OMP/plugin packages, Claude, Agent/Codex-compatible directories, OpenCode, GitHub, then managed auto-learned skills. Within a walked project source, the closest directory wins. Avoid duplicate names; `/extensions` shows which copy is active and which is shadowed.
 
 ## Enable and filter discovery
+
+<Callout type="info">
 
 Use one-run flags when you want a temporary boundary:
 
@@ -112,6 +114,8 @@ disabledExtensions:
 ```
 
 Provider-specific switches are also available under `skills`: `enablePiUser`, `enablePiProject`, `enableAgentsUser`, `enableAgentsProject`, `enableClaudeUser`, `enableClaudeProject`, and `enableCodexUser`. All default to `true`.
+
+</Callout>
 
 ## Compatible locations
 
@@ -155,7 +159,7 @@ That is a complete current skill. The directory name, `release-check`, becomes i
 | `hide` | No | Omits the skill from the automatic skill listing while preserving explicit invocation. |
 | `disable-model-invocation` | No | Agent Skills-compatible spelling with the same effect as `hide`. |
 
-Although some compatible formats accept fields such as `globs` or `alwaysApply`, omp does not currently use them to select or automatically inject a skill. Put the trigger conditions in `description`. For guidance that must always be present, use [Context files](/docs/context-files) instead.
+Although some compatible formats accept fields such as `globs` or `alwaysApply`, omp does not currently use them to select or automatically inject a skill. Put the trigger conditions in `description`. For guidance that must always be present, use [Context files](context-files) instead.
 
 A useful description names:
 

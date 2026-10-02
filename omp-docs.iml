@@ -6,6 +6,8 @@
       <excludeFolder url="file://$MODULE_DIR$/local:" />
       <excludeFolder url="file://$MODULE_DIR$/xd:" />
       <excludeFolder url="file://$MODULE_DIR$/.source" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
+      <excludeFolder url="file://$MODULE_DIR$/agent:" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

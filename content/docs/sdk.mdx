@@ -7,58 +7,65 @@ description: "Embed omp in a Bun application with direct access to sessions, eve
 
 Use the SDK when your host is written in TypeScript or JavaScript, runs on Bun, and should share a process with omp. You get the same agent core as the CLI, but your application owns the prompt lifecycle, receives streaming events, and can expose ordinary functions as agent tools.
 
-For a different language, process isolation, or a stable JSON boundary, choose [RPC mode](/docs/rpc) instead.
+For a different language, process isolation, or a stable JSON boundary, choose [RPC mode](rpc) instead.
 
-### 1. Install the package
+<Callout type="warn" title="Bun runtime requirement">
+  The SDK requires **Bun 1.3.14 or newer**. It is not a Node.js SDK and relies on Bun-native primitives.
+</Callout>
 
-```sh
-bun add @oh-my-pi/pi-coding-agent
-```
+<Steps>
+  <Step>
+    ### Install the package
 
-The SDK requires **Bun 1.3.14 or newer**. It is not a Node.js SDK.
+    ```sh
+    bun add @oh-my-pi/pi-coding-agent
+    ```
 
-Before sending a model-backed prompt, authenticate a provider. The quickest path is to run `omp`, enter `/login`, and complete the provider flow. Provider API-key environment variables also work; see [Providers](/docs/providers).
+    Before sending a model-backed prompt, authenticate a provider. The quickest path is to run `omp`, enter `/login`, and complete the provider flow. Provider API-key environment variables also work; see [Providers](providers).
+  </Step>
+  <Step>
+    ### Run one session
 
-### 2. Run one session
+    Create `embed.ts`:
 
-Create `embed.ts`:
+    ```ts
+    import { createAgentSession } from "@oh-my-pi/pi-coding-agent";
 
-```ts
-import { createAgentSession } from "@oh-my-pi/pi-coding-agent";
+    const { session, modelFallbackMessage } = await createAgentSession({
+      cwd: process.cwd(),
+    });
 
-const { session, modelFallbackMessage } = await createAgentSession({
-  cwd: process.cwd(),
-});
+    if (modelFallbackMessage) {
+      process.stderr.write(`${modelFallbackMessage}\n`);
+    }
 
-if (modelFallbackMessage) {
-  process.stderr.write(`${modelFallbackMessage}\n`);
-}
+    const unsubscribe = session.subscribe((event) => {
+      if (
+        event.type === "message_update" &&
+        event.assistantMessageEvent.type === "text_delta"
+      ) {
+        process.stdout.write(event.assistantMessageEvent.delta);
+      }
+    });
 
-const unsubscribe = session.subscribe((event) => {
-  if (
-    event.type === "message_update" &&
-    event.assistantMessageEvent.type === "text_delta"
-  ) {
-    process.stdout.write(event.assistantMessageEvent.delta);
-  }
-});
+    try {
+      await session.prompt("Summarize this repository in three bullets.");
+      process.stdout.write("\n");
+    } finally {
+      unsubscribe();
+      await session.dispose();
+    }
+    ```
 
-try {
-  await session.prompt("Summarize this repository in three bullets.");
-  process.stdout.write("\n");
-} finally {
-  unsubscribe();
-  await session.dispose();
-}
-```
+    Run it from the project omp should work on:
 
-Run it from the project omp should work on:
+    ```sh
+    bun run embed.ts
+    ```
 
-```sh
-bun run embed.ts
-```
-
-The text arrives incrementally through `message_update` events. Tool execution, history updates, retries, and compaction remain part of the session lifecycle; `prompt()` completes after the submitted turn settles. By default, the session uses the current project and persists history just like the CLI.
+    The text arrives incrementally through `message_update` events. Tool execution, history updates, retries, and compaction remain part of the session lifecycle; `prompt()` completes after the submitted turn settles. By default, the session uses the current project and persists history just like the CLI.
+  </Step>
+</Steps>
 
 ## Defaults and configuration
 
@@ -95,7 +102,7 @@ const { session } = await createAgentSession({
 });
 ```
 
-For an explicit file-backed session, use `SessionManager.create(cwd)`. The same public class also provides `continueRecent(cwd)`, `list(cwd)`, `open(path)`, and fork helpers; see [Sessions](/docs/sessions).
+For an explicit file-backed session, use `SessionManager.create(cwd)`. The same public class also provides `continueRecent(cwd)`, `list(cwd)`, `open(path)`, and fork helpers; see [Sessions](sessions).
 
 ### Own model and settings selection
 
@@ -134,7 +141,7 @@ const { session } = await createAgentSession({
 });
 ```
 
-When you pass both `authStorage` and `modelRegistry`, the registry must have been created with that same auth-storage instance. For normal persisted configuration and its precedence rules, see [Settings](/docs/settings).
+When you pass both `authStorage` and `modelRegistry`, the registry must have been created with that same auth-storage instance. For normal persisted configuration and its precedence rules, see [Settings](settings).
 
 The default process-wide `AgentRegistry` admits one top-level `Main` identity per generation. If your application runs multiple independent top-level sessions concurrently, give each session its own `agentRegistry: new AgentRegistry()`.
 
@@ -205,7 +212,9 @@ const { session } = await createAgentSession({
 });
 ```
 
-Tool schemas validate shape, not authorization. Enforce tenant boundaries, permissions, rate limits, and secret handling inside the host callback. Return `isError: true` for an expected failure the model can react to; reserve thrown errors for cancellation or unexpected failures.
+<Callout type="warn" title="Enforce authorization host-side">
+  Tool schemas validate shape, not authorization. Enforce tenant boundaries, permissions, rate limits, and secret handling inside the host callback. Return `isError: true` for an expected failure the model can react to; reserve thrown errors for cancellation or unexpected failures.
+</Callout>
 
 `toolNames` requests tools and can enable tools that are disabled by default, but it is **not** an allowlist by itself. To restrict the session, set `restrictToolNames: true`. In a restricted session, a host tool is available only when all three are true:
 
@@ -218,7 +227,7 @@ const { session } = await createAgentSession({
 });
 ```
 
-For reusable tools, commands, hooks, and UI integrations loaded from authored packages, use [Extension authoring](/docs/extension-authoring).
+For reusable tools, commands, hooks, and UI integrations loaded from authored packages, use [Extension authoring](extension-authoring).
 
 ## Control and clean up a session
 
@@ -233,27 +242,53 @@ For reusable tools, commands, hooks, and UI integrations loaded from authored pa
 
 Calling `prompt()` while the session is already streaming requires `streamingBehavior: "steer"` or `"followUp"`; calling `steer()` or `followUp()` directly is clearer for most hosts.
 
-Use `try`/`finally` around the lifetime of every session. If your host has its own asynchronous shutdown work, call `session.beginDispose()` before the first shutdown `await`, finish the host cleanup, and then `await session.dispose()`. `beginDispose()` closes admission to new work; it does not replace `dispose()`.
+<Callout type="warn" title="Always dispose sessions">
+  Use `try`/`finally` around the lifetime of every session. If your host has its own asynchronous shutdown work, call `session.beginDispose()` before the first shutdown `await`, finish the host cleanup, and then `await session.dispose()`. `beginDispose()` closes admission to new work; it does not replace `dispose()`.
+</Callout>
 
 ## Handle failures
 
-Handle failures at both API and event boundaries:
-
-- Wrap `createAgentSession()` and `session.prompt()` in `try` / `catch`. Invalid configuration, divergent auth/model wiring, a missing selected model, a missing API key, or a busy session can reject the call.
-- Watch `message_update` where `assistantMessageEvent.type === "error"` for provider-side streamed failures. Its assistant message carries the provider error details.
-- Watch `tool_execution_end.isError` for a tool failure that the agent received as a result.
-- Display `modelFallbackMessage` when restoring a session cannot use its saved model and omp selects another one.
-- If no model is available, run `omp` and use `/login`, set the provider's API-key environment variable, or pass an explicitly configured `authStorage` and `modelRegistry`.
-- Always dispose the session after failure; disposal is safe to call more than once.
+<Accordions>
+  <Accordion title="Configuration or discovery failures">
+    Wrap `createAgentSession()` and `session.prompt()` in `try` / `catch`. Invalid configuration, divergent auth/model wiring, a missing selected model, a missing API key, or a busy session can reject the call.
+</Accordion>
+  <Accordion title="Provider streaming errors">
+    Watch `message_update` where `assistantMessageEvent.type === "error"` for provider-side streamed failures. Its assistant message carries the provider error details.
+</Accordion>
+  <Accordion title="Tool execution errors">
+    Watch `tool_execution_end.isError` for a tool failure that the agent received as a result.
+</Accordion>
+  <Accordion title="Model fallbacks">
+    Display `modelFallbackMessage` when restoring a session cannot use its saved model and omp selects another one.
+</Accordion>
+  <Accordion title="Missing model authentication">
+    If no model is available, run `omp` and use `/login`, set the provider's API-key environment variable, or pass an explicitly configured `authStorage` and `modelRegistry`.
+</Accordion>
+</Accordions>
 
 ## SDK or RPC?
 
-| Choose | Best fit | Trade-off |
-| --- | --- | --- |
-| **SDK** | Bun/TypeScript host, direct callbacks for tools, direct session state, lowest integration overhead | omp shares your process, runtime, memory, and failure boundary |
-| **RPC** | Any language, child-process or service isolation, newline-delimited JSON protocol | The host must manage a process and protocol lifecycle |
+<Tabs items={['SDK (In-process)', 'RPC (Process boundary)']}>
+  <Tab value="SDK (In-process)">
+    - **Best fit:** Bun/TypeScript host, direct callbacks for tools, direct session state, lowest integration overhead.
+    - **Trade-off:** omp shares your process, runtime, memory, and failure boundary.
+  </Tab>
+  <Tab value="RPC (Process boundary)">
+    - **Best fit:** Any language, child-process or service isolation, newline-delimited JSON protocol.
+    - **Trade-off:** The host must manage a process and protocol lifecycle.
+  </Tab>
+</Tabs>
 
 RPC starts with `omp --mode rpc` and exposes session events over stdio. Do not put an RPC subprocess behind the SDK merely to call the same process twice: choose the SDK for an in-process Bun host, or RPC for a real language/process boundary.
+
+## Related
+
+<Cards>
+  <Card title="RPC mode" description="Control omp via JSON-RPC over stdin/stdout" href="rpc" />
+  <Card title="Extension authoring" description="Build reusable tools, commands, and hooks" href="extension-authoring" />
+  <Card title="Sessions" description="Session lifecycle, persistence, and branching" href="sessions" />
+  <Card title="Providers" description="Configure models, keys, and OAuth" href="providers" />
+</Cards>
 
 ---
 

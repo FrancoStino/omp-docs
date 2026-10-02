@@ -16,7 +16,7 @@ Tell omp the outcome you want. It chooses the underlying capability; you do not 
 
 Start with search when you do not know the source. Give omp an exact URL when you do. Use browser automation only when rendering or interaction is necessary, and use the relay only when you intentionally want to share your own Chrome state.
 
-For GitHub issues and pull requests, ask omp to use its [GitHub integration](/docs/github) instead. It is structured, cached, and usually more reliable than scraping the site.
+For GitHub issues and pull requests, ask omp to use its [GitHub integration](github) instead. It is structured, cached, and usually more reliable than scraping the site.
 
 ## Search the web
 
@@ -34,7 +34,7 @@ Search is enabled by default with `web_search.enabled`. omp walks the available 
 
 Providers can use credentials already stored by `/login`, provider API-key environment variables, or credential-free search engines. A practical setup is:
 
-1. Run `/login` for the provider you already use, or configure its API key as described in [Providers](/docs/providers) and [Secrets](/docs/secrets).
+1. Run `/login` for the provider you already use, or configure its API key as described in [Providers](providers) and [Secrets](secrets).
 2. In `/settings`, put that provider near the front of **Web Search Provider Order**.
 3. Ask omp to search for a small, current fact and include its sources.
 
@@ -49,7 +49,7 @@ providers:
   webSearchTimeoutSeconds: 60
 ```
 
-Unlisted providers retain their built-in relative order. The timeout applies to each provider attempt, not the entire fallback chain. See [Settings](/docs/settings) for configuration precedence.
+Unlisted providers retain their built-in relative order. The timeout applies to each provider attempt, not the entire fallback chain. See [Settings](settings) for configuration precedence.
 
 Search results are evidence, not authority. Ask omp to prefer primary sources, corroborate important claims, and identify sources it could not access. Search cannot see private pages merely because you are signed in to Chrome; use the relay for those.
 
@@ -222,7 +222,12 @@ Bring the intended tab to the front and include a distinctive title or URL fragm
 
 ### A relay tab disconnects
 
+<Callout type="warn">
+
 Do not dismiss Chrome's debugging infobar while omp is working. Navigate the tab once to make it attachable again, verify the extension badge is on, and retry. If Chrome reports another debugger, close DevTools or the other debugger client first.
+
+</Callout>
+
 
 ### Uploads or downloads are not where expected
 

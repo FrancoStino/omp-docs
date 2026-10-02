@@ -62,7 +62,7 @@ Supported catalog sources include:
 - a direct HTTP(S) URL ending in `.json`
 - local directories such as `./catalog`, `~/catalog`, or `/absolute/catalog`
 
-Git and local catalogs use `.omp-plugin/marketplace.json`, falling back to the Claude Code-compatible `.claude-plugin/marketplace.json`. See [Marketplaces](/docs/marketplace) for catalog browsing, source formats, and publishing.
+Git and local catalogs use `.omp-plugin/marketplace.json`, falling back to the Claude Code-compatible `.claude-plugin/marketplace.json`. See [Marketplaces](marketplace) for catalog browsing, source formats, and publishing.
 
 ### User and project scope
 
@@ -220,6 +220,8 @@ Add `-l` or `--local` to `config list`, `get`, `set`, or `delete` to use the cur
 
 ## Trust checklist
 
+<Callout type="error">
+
 A plugin can run extension modules in omp's process, register hooks around prompts and tool activity, expose executable tools, start MCP/LSP/DAP processes, and receive configured credentials. Treat installation like running code from that source.
 
 Before installing or upgrading:
@@ -233,6 +235,8 @@ Before installing or upgrading:
 
 Adding a marketplace does not execute its plugins, but the catalog controls where later installs and upgrades fetch code. Trust both the catalog maintainer and each plugin source.
 
+</Callout>
+
 ## Plugins, extensions, and marketplaces
 
 | Term | What it is | How users manage it |
@@ -241,7 +245,7 @@ Adding a marketplace does not execute its plugins, but the catalog controls wher
 | **Extension** | Runtime TypeScript/JavaScript code that registers behavior with omp | Load directly for one session or from config, or ship it inside a plugin |
 | **Marketplace** | A catalog that names plugins and points to their sources | `omp plugin marketplace …` or `/marketplace …` |
 
-A plugin does not have to contain an extension module; it may contain only declarative surfaces such as skills or MCP configuration. Conversely, you can load an extension directly without installing it as a managed plugin. See [Authoring extensions](/docs/extension-authoring) for that runtime API.
+A plugin does not have to contain an extension module; it may contain only declarative surfaces such as skills or MCP configuration. Conversely, you can load an extension directly without installing it as a managed plugin. See [Authoring extensions](extension-authoring) for that runtime API.
 
 ## Command reference
 
@@ -268,6 +272,8 @@ Use `--scope user|project` only with marketplace install, enable, disable, upgra
 
 ## For plugin authors
 
+<Callout type="info">
+
 Users should not need to understand manifests to manage plugins. Authors of npm or linked omp packages declare runtime entry points in `package.json` under `omp` (legacy `pi` is also accepted):
 
 ```json
@@ -280,8 +286,10 @@ Users should not need to understand manifests to manage plugins. Authors of npm 
 }
 ```
 
-A package can also use conventional `skills/`, `commands/`, `hooks/`, `tools/`, `rules/`, `prompts/`, and `agents/` directories plus `.mcp.json` or `mcp.json`. Optional `features` and typed `settings` belong in the `omp` manifest because the management commands above read them. See [Authoring extensions](/docs/extension-authoring) for the public extension API and [Marketplaces](/docs/marketplace) for catalog manifests.
+A package can also use conventional `skills/`, `commands/`, `hooks/`, `tools/`, `rules/`, `prompts/`, and `agents/` directories plus `.mcp.json` or `mcp.json`. Optional `features` and typed `settings` belong in the `omp` manifest because the management commands above read them. See [Authoring extensions](extension-authoring) for the public extension API and [Marketplaces](marketplace) for catalog manifests.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/plugins) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+
+</Callout>

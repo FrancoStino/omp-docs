@@ -24,7 +24,7 @@ const md = createMarkdownRenderer();
 
 function pageName(url: string): string {
     const path = url.split('#')[0];
-    const slug = path.replace(/^\/docs\/?/, '').split('/').filter(Boolean).pop() ?? 'Overview';
+    const slug = path.replace(/^\//, '').split('/').filter(Boolean).pop() ?? 'Overview';
     return slug
         .split('-')
         .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))

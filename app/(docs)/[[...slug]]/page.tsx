@@ -4,8 +4,9 @@ import {notFound} from 'next/navigation';
 import {getMDXComponents} from '@/components/mdx';
 import type {Metadata} from 'next';
 import {createRelativeLink} from 'fumadocs-ui/mdx';
+import {DocsFooter} from '@/components/docs-footer';
 
-export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
+export default async function Page(props: PageProps<'/[[...slug]]'>) {
     const params = await props.params;
     const page = source.getPage(params.slug);
     if (!page) notFound();
@@ -13,7 +14,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
     const MDX = page.data.body;
 
     return (
-        <DocsPage toc={page.data.toc} full={page.data.full}>
+        <DocsPage toc={page.data.toc} full={page.data.full} slots={{footer: DocsFooter}}>
             <DocsTitle>{page.data.title}</DocsTitle>
             <DocsDescription>{page.data.description}</DocsDescription>
             <DocsBody>
@@ -32,7 +33,7 @@ export async function generateStaticParams() {
     return source.generateParams();
 }
 
-export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<'/[[...slug]]'>): Promise<Metadata> {
     const params = await props.params;
     const page = source.getPage(params.slug);
     if (!page) notFound();

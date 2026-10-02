@@ -5,85 +5,115 @@ description: "Build a standards-based tool server, connect it to omp, and verify
 
 ## Build once, use it from many clients
 
-An MCP server turns an API, local service, or workflow into tools that omp can discover and use. Choose MCP when the integration should also work with other MCP clients. For an omp-only integration, a [custom tool](/docs/custom-tools) is usually smaller.
+An MCP server turns an API, local service, or workflow into tools that omp can discover and use. Choose MCP when the integration should also work with other MCP clients. For an omp-only integration, a [custom tool](custom-tools) is usually smaller.
 
 The quickest path is a local **stdio** server. The official SDK handles JSON-RPC framing, version negotiation, and the initialization sequence, so your code can focus on tool schemas and behavior.
 
 ## Build a minimal stdio server
 
-Install the current TypeScript server SDK and Zod in your project:
+<Steps>
+  <Step>
+    ### Install dependencies
 
-```bash
-npm install @modelcontextprotocol/server zod
-```
+    Install the current TypeScript server SDK and Zod in your project:
 
-Save this as `mcp/hello-server.mjs`:
+    ```bash
+    npm install @modelcontextprotocol/server zod
+    ```
+  </Step>
+  <Step>
+    ### Implement the server code
 
-```js
-import { McpServer } from "@modelcontextprotocol/server";
-import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
-import * as z from "zod/v4";
+    Save this as `mcp/hello-server.mjs`:
 
-const server = new McpServer({
-  name: "hello",
-  version: "1.0.0",
-});
+    ```js
+    import { McpServer } from "@modelcontextprotocol/server";
+    import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+    import * as z from "zod/v4";
 
-server.registerTool(
-  "greet",
-  {
-    description: "Greet one person by name.",
-    inputSchema: z.object({
-      name: z.string().min(1).describe("The person's name"),
-    }),
-  },
-  async ({ name }) => ({
-    content: [{ type: "text", text: `Hello, ${name}!` }],
-  }),
-);
+    const server = new McpServer({
+      name: "hello",
+      version: "1.0.0",
+    });
 
-await server.connect(new StdioServerTransport());
-```
+    server.registerTool(
+      "greet",
+      {
+        description: "Greet one person by name.",
+        inputSchema: z.object({
+          name: z.string().min(1).describe("The person's name"),
+        }),
+      },
+      async ({ name }) => ({
+        content: [{ type: "text", text: `Hello, ${name}!` }],
+      }),
+    );
 
-Do not print logs to stdout in a stdio server. stdout carries newline-delimited MCP messages; one debug line can corrupt the connection. Write diagnostics to stderr instead.
+    await server.connect(new StdioServerTransport());
+    ```
 
-### Connect it to omp
+    <Callout type="warn" title="Do not write logs to stdout">
+      Do not print logs to stdout in a stdio server. stdout carries newline-delimited MCP messages; a single debug line can corrupt the framing. Write diagnostics to stderr instead.
+    </Callout>
+  </Step>
+  <Step>
+    ### Connect it to omp
 
-Add a project config at `.omp/mcp.json`:
+    Add a project config at `.omp/mcp.json`:
 
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
-  "mcpServers": {
-    "hello": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["./mcp/hello-server.mjs"]
+    ```json
+    {
+      "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+      "mcpServers": {
+        "hello": {
+          "type": "stdio",
+          "command": "node",
+          "args": ["./mcp/hello-server.mjs"]
+        }
+      }
     }
-  }
-}
-```
+    ```
+  </Step>
+  <Step>
+    ### Reload and test
 
-Start omp in that project, then run:
+    Start omp in that project, then run:
 
-```text
-/mcp reload
-/mcp test hello
-```
+    ```text
+    /mcp reload
+    /mcp test hello
+    ```
 
-`/mcp test hello` creates a temporary connection, completes initialization, calls `tools/list`, and reports the server identity and discovered tool names. It does **not** call a tool. Exercise the handler with a normal request:
+    `/mcp test hello` creates a temporary connection, completes initialization, calls `tools/list`, and reports the server identity and discovered tool names. It does **not** call a tool. Exercise the handler with a normal prompt:
 
-> Use the hello server to greet Ada.
+    > Use the hello server to greet Ada.
 
-You should see `Hello, Ada!`. The child process starts in the omp project directory unless the server config sets `cwd`, so relative `args` above resolve from the project root.
+    You should see `Hello, Ada!`. The child process starts in the omp project directory unless the server config sets `cwd`, so relative `args` above resolve from the project root.
+  </Step>
+</Steps>
 
 ## Choose a transport
 
-| Transport | Use it for | Server-side contract | omp config |
-| --- | --- | --- | --- |
-| **stdio** | A local server launched for one omp session | Read JSON-RPC from stdin, write newline-delimited JSON-RPC to stdout, and keep diagnostics off stdout | Omit `type` or use `"type": "stdio"`; set `command`, with optional `args`, `env`, and `cwd` |
-| **Streamable HTTP** | A daemon or hosted, shared service | Accept MCP JSON-RPC over HTTP POST; support JSON or SSE responses as required by the MCP transport spec | Use `"type": "http"` and `url`; `headers` and OAuth are optional |
-| **Legacy HTTP+SSE** | An existing server built for the 2024-11-05 transport | Open an SSE stream that announces the JSON-RPC POST endpoint | Use `"type": "sse"` and `url`; do not choose this for a new server |
+<Tabs items={['stdio', 'Streamable HTTP', 'Legacy HTTP+SSE']}>
+  <Tab value="stdio">
+    Best for a local server launched for one omp session.
+
+    - **Contract:** Read JSON-RPC from stdin, write newline-delimited JSON-RPC to stdout, keep diagnostics on stderr.
+    - **Config:** Omit `type` or use `"type": "stdio"`; set `command`, with optional `args`, `env`, and `cwd`.
+  </Tab>
+  <Tab value="Streamable HTTP">
+    Best for a background daemon or hosted, shared remote service.
+
+    - **Contract:** Accept MCP JSON-RPC over HTTP POST; support JSON or SSE responses as required by the MCP transport spec.
+    - **Config:** Use `"type": "http"` and `url`; `headers` and `oauth` are optional.
+  </Tab>
+  <Tab value="Legacy HTTP+SSE">
+    Best for an existing server built for the 2024-11-05 transport specification.
+
+    - **Contract:** Open an SSE stream that announces the JSON-RPC POST endpoint.
+    - **Config:** Use `"type": "sse"` and `url`. Do not choose this transport for a new server.
+  </Tab>
+</Tabs>
 
 stdio is the default when `type` is absent. A remote entry without `"type": "http"` is therefore treated as stdio and fails because it has no `command`.
 
@@ -145,7 +175,9 @@ Configure the running endpoint:
 }
 ```
 
-For a public deployment, validate `Host` and `Origin`, authenticate before dispatching to the MCP handler, use TLS, and pass only verified identity to tool code. The handler does not authenticate requests for you. See the SDK's [HTTP serving guide](https://ts.sdk.modelcontextprotocol.io/v2/serving/http.html) and [MCP](/docs/mcp) for omp header and OAuth configuration.
+<Callout type="warn" title="Public deployment security">
+  For a public deployment, validate `Host` and `Origin`, authenticate before dispatching to the MCP handler, enforce TLS, and pass only verified identity to tool code. The handler does not authenticate requests for you.
+</Callout>
 
 ## Public protocol contract
 
@@ -199,33 +231,73 @@ return {
 };
 ```
 
-Reserve thrown exceptions or JSON-RPC error responses for protocol violations, unavailable dependencies, and unexpected server faults. omp displays expected `isError` results as tool errors; transport and JSON-RPC failures surface as MCP errors. Do not include secrets, tokens, or private stack traces in either form.
+<Callout type="warn" title="Do not leak secrets in error traces">
+  Reserve thrown exceptions or JSON-RPC error responses for protocol violations, unavailable dependencies, and unexpected server faults. omp displays expected `isError` results as tool errors; transport and JSON-RPC failures surface as MCP errors. Never include secrets, tokens, or private stack traces in either form.
+</Callout>
 
 For protected HTTP tools, a standards-based authorization challenge may be returned with an error in `_meta["mcp/www_authenticate"]`. omp recognizes that public MCP challenge and can reauthorize before retrying when the server is configured for OAuth.
 
 ## Debugging loop
 
-1. **Test the server independently.** For the stdio example, run `node --check mcp/hello-server.mjs`, then use the official inspector:
+<Steps>
+  <Step>
+    ### Test the server independently
 
-   ```bash
-   npx @modelcontextprotocol/inspector node ./mcp/hello-server.mjs
-   ```
+    For the stdio example, run `node --check mcp/hello-server.mjs`, then use the official inspector:
 
-   Confirm that `greet` appears and call it with `{ "name": "Ada" }`.
-2. **Reload discovery.** After editing `.omp/mcp.json`, run `/mcp reload`, then `/mcp list` to confirm the server name and source file.
-3. **Test discovery and schemas.** Run `/mcp test hello`. It verifies initialization and `tools/list`, but not the handler itself.
-4. **Test the real user path.** Ask omp to perform the action, then inspect the returned content. For dynamic servers, `/mcp notifications` helps confirm list-change notifications.
-5. **Restart only what changed.** Use `/mcp reconnect hello` after changing local server code. Use `/mcp reload` after changing discovery or config.
+    ```bash
+    npx @modelcontextprotocol/inspector node ./mcp/hello-server.mjs
+    ```
 
-| Symptom | Check |
-| --- | --- |
-| `ENOENT` or command not found | Verify `command`, the project-relative path, executable permissions, and `cwd`. |
-| Test hangs or times out | Ensure the server answers `initialize`, then accepts `notifications/initialized` and `tools/list`. The default request timeout is 30 seconds; fix the stall before increasing `timeout`. |
-| Invalid JSON or immediate disconnect | Remove every stdout log/banner. Check that each stdio frame is one complete JSON-RPC object followed by a newline. |
-| Test connects but a real call fails | `/mcp test` does not call tools. Reproduce with the Inspector and return an actionable `isError` result for domain failures. |
-| Tool changes do not appear | Reconnect a restarted stdio process, or advertise `tools.listChanged` and send `notifications/tools/list_changed`. |
-| HTTP 401 or 403 | Verify server-side token validation and the client's header/OAuth config; use `/mcp reauth <name>` for managed OAuth. |
-| Tool is missing although the server lists it | Look for a normalized-name collision, an invalid top-level input schema, or another server definition shadowing the same name. |
+    Confirm that `greet` appears and call it with `{ "name": "Ada" }`.
+  </Step>
+  <Step>
+    ### Reload discovery
+
+    After editing `.omp/mcp.json`, run `/mcp reload`, then `/mcp list` to confirm the server name and source file.
+  </Step>
+  <Step>
+    ### Test discovery and schemas
+
+    Run `/mcp test hello`. It verifies initialization and `tools/list`, but not the handler itself.
+  </Step>
+  <Step>
+    ### Test the real user path
+
+    Ask omp to perform the action in natural conversation, then inspect the returned content. For dynamic servers, `/mcp notifications` helps confirm list-change notifications.
+  </Step>
+  <Step>
+    ### Restart only what changed
+
+    Use `/mcp reconnect hello` after changing local server code. Use `/mcp reload` after changing discovery or config.
+  </Step>
+</Steps>
+
+### Troubleshooting symptoms
+
+<Accordions>
+  <Accordion title="ENOENT or command not found">
+    Verify `command`, the project-relative path, executable permissions, and `cwd`.
+</Accordion>
+  <Accordion title="Test hangs or times out">
+    Ensure the server answers `initialize`, then accepts `notifications/initialized` and `tools/list`. The default request timeout is 30 seconds; fix the stall before increasing `timeout`.
+</Accordion>
+  <Accordion title="Invalid JSON or immediate disconnect">
+    Remove every stdout log/banner. Check that each stdio frame is one complete JSON-RPC object followed by a newline.
+</Accordion>
+  <Accordion title="Test connects but a real call fails">
+    `/mcp test` does not call tools. Reproduce with the Inspector and return an actionable `isError` result for domain failures.
+</Accordion>
+  <Accordion title="Tool changes do not appear">
+    Reconnect a restarted stdio process, or advertise `tools.listChanged` and send `notifications/tools/list_changed`.
+</Accordion>
+  <Accordion title="HTTP 401 or 403">
+    Verify server-side token validation and the client's header/OAuth config; use `/mcp reauth <name>` for managed OAuth.
+</Accordion>
+  <Accordion title="Tool is missing although the server lists it">
+    Look for a normalized-name collision, an invalid top-level input schema, or another server definition shadowing the same name.
+</Accordion>
+</Accordions>
 
 ## Ship checklist
 
@@ -238,11 +310,12 @@ For protected HTTP tools, a standards-based authorization challenge may be retur
 
 ## Related
 
-- [MCP](/docs/mcp) — config locations, discovery, transports, credentials, and lifecycle commands.
-- [Custom tools](/docs/custom-tools) — omp-only alternative when cross-client compatibility is unnecessary.
-- [Plugins](/docs/plugins) — package MCP config with skills, commands, and hooks.
-- [MCP specification](https://modelcontextprotocol.io/specification/2025-11-25) — public protocol and transport contract.
-- [MCP TypeScript SDK](https://ts.sdk.modelcontextprotocol.io/v2/) — current server APIs and examples.
+<Cards>
+  <Card title="MCP" description="Config locations, discovery, transports, and credentials" href="mcp" />
+  <Card title="Custom tools" description="Fast native tools when cross-client compatibility is unneeded" href="custom-tools" />
+  <Card title="Plugins" description="Package MCP config with skills, commands, and hooks" href="plugins" />
+  <Card title="Extension authoring" description="Build full TypeScript extensions with custom capabilities" href="extension-authoring" />
+</Cards>
 
 ---
 

@@ -22,7 +22,7 @@ inspect the locals and running total, and explain where the bad value enters.
 
 omp selects debugpy from the `.py` target and Python project markers, launches the script, and drives the stopped process. You do not need to translate the request into DAP operations or manage frame identifiers yourself.
 
-For questions that only require reading definitions, references, or types, use [code intelligence](/docs/code-intelligence) instead. Debugging executes or attaches to real code and can change the target's state.
+For questions that only require reading definitions, references, or types, use [code intelligence](code-intelligence) instead. Debugging executes or attaches to real code and can change the target's state.
 
 ## What works automatically
 
@@ -192,7 +192,8 @@ A stopped process is genuinely paused. It may stop serving requests or holding l
 
 ## Troubleshooting
 
-### Debugging is unavailable
+<Accordions>
+  <Accordion title="Debugging is unavailable">
 
 Check the feature gate and enable it if necessary:
 
@@ -202,8 +203,8 @@ omp config set debug.enabled true
 ```
 
 Start a new omp session after changing which tools are enabled.
-
-### omp says the adapter is unavailable
+</Accordion>
+  <Accordion title="omp says the adapter is unavailable">
 
 Verify the executable from the same shell that starts omp. If it is installed elsewhere, either update `PATH` before starting omp or set an absolute `command` in `dap.json`. For debugpy, `python` may exist even when the module does not; verify with:
 
@@ -212,26 +213,28 @@ python -m debugpy --version
 ```
 
 For JavaScript, verify `JS_DEBUG_DAP_SERVER` or one of the automatic `dapDebugServer.js` locations rather than looking for a `js-debug-adapter` executable.
-
-### The wrong adapter is selected
+</Accordion>
+  <Accordion title="The wrong adapter is selected">
 
 Name the adapter in the request. For a durable fix, correct its `fileTypes` and `rootMarkers` in the project DAP config. File extensions should include the leading dot and are matched lowercase.
-
-### The target path is rejected
+</Accordion>
+  <Accordion title="The target path is rejected">
 
 Pass a source file or executable path, not a command plus flags in one string. Put program arguments in the request separately. Directory targets require an adapter with `acceptsDirectoryProgram: true`; the built-in Delve configuration enables this for Go packages.
-
-### A breakpoint is pending or never hit
+</Accordion>
+  <Accordion title="A breakpoint is pending or never hit">
 
 Check that the source path and line belong to the code actually loaded by the target. Rebuild compiled code with debug symbols, disable optimizations if stepping is misleading, and verify source-map settings for generated JavaScript. A conditional expression must use the target language and be supported by that adapter.
-
-### Attach fails
+</Accordion>
+  <Accordion title="Attach fails">
 
 Confirm the PID is still alive or the host and port are reachable. Then name the intended adapter explicitly. Some adapters require additional fields such as a process selector or mode; put those adapter-specific values in `attachDefaults`.
-
-### omp reports another active session
+</Accordion>
+  <Accordion title="omp reports another active session">
 
 Ask it to terminate the existing debug session, then retry. A launch or attach failure is cleaned up automatically, but a running or stopped session remains active until the debugging work ends.
+</Accordion>
+</Accordions>
 
 ## DAP adapter configuration reference
 

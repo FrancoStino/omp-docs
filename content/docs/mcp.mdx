@@ -7,23 +7,39 @@ description: "Connect omp to external services and local programs through Model 
 
 Use MCP when a service or tool already publishes an MCP server and you want omp to work with it—for example, to search an issue tracker, query a database, or use a filesystem outside the current project. You configure the server once, then ask for the work in ordinary language.
 
-The quickest route is the guided setup inside omp:
+<Steps>
+  <Step>
+    ### Add the server
 
-```text
-/mcp add
-```
+    The quickest route is the guided setup inside omp:
 
-Choose **Project** when everyone working in this repository should discover the server, or **User** when it is only for you. After setup, verify it immediately:
+    ```text
+    /mcp add
+    ```
 
-```text
-/mcp test filesystem
-```
+    Choose **Project** when everyone working in this repository should discover the server, or **User** when it is only for you.
+  </Step>
+  <Step>
+    ### Verify the connection
 
-A successful test shows the server name and version, its tool count, and up to ten tool names. You can then ask, for example:
+    Verify the server immediately after setup:
 
-> Use the filesystem MCP server to summarize the Markdown files in my Documents folder.
+    ```text
+    /mcp test filesystem
+    ```
 
-You do not need to address MCP tools by their internal names.
+    A successful test shows the server name and version, its tool count, and up to ten tool names.
+  </Step>
+  <Step>
+    ### Use the tools in natural language
+
+    You can then ask for work in ordinary conversation:
+
+    > Use the filesystem MCP server to summarize the Markdown files in my Documents folder.
+
+    You do not need to address MCP tools by their internal names.
+  </Step>
+</Steps>
 
 ## Minimal configuration
 
@@ -74,33 +90,75 @@ Project MCP discovery is enabled by default. The first definition found for a du
 
 ## Transports
 
-Choose the transport published by the server. A URL ending in `/sse` does not by itself select SSE; set `type` explicitly for every remote server.
+Choose the transport published by the server. A URL ending in `/sse` does not by itself select SSE; set `type` explicitly for every remote server. A server cannot have both `command` and `url`.
 
-| Transport | Required fields | When to use it |
-| --- | --- | --- |
-| `stdio` | `command`; optional `args`, `env`, `cwd` | A local executable. `type` may be omitted. |
-| `http` | `type: "http"`, `url`; optional `headers` | A hosted Streamable HTTP server. Use this for new remote integrations. |
-| `sse` | `type: "sse"`, `url`; optional `headers` | A legacy HTTP+SSE server that specifically requires the older transport. |
+<Tabs items={['stdio', 'http', 'sse']}>
+  <Tab value="stdio">
+    Use for a local executable process. `type` may be omitted.
 
-A minimal Streamable HTTP entry looks like this:
+    - **Required fields:** `command`
+    - **Optional fields:** `args`, `env`, `cwd`
 
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
-  "mcpServers": {
-    "acme": {
-      "type": "http",
-      "url": "https://mcp.example.com/mcp"
+    ```json
+    {
+      "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+      "mcpServers": {
+        "filesystem": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "/Users/alice/Documents"
+          ]
+        }
+      }
     }
-  }
-}
-```
+    ```
+  </Tab>
+  <Tab value="http">
+    Use for a hosted Streamable HTTP server. Recommended for new remote integrations.
 
-A server cannot have both `command` and `url`.
+    - **Required fields:** `type: "http"`, `url`
+    - **Optional fields:** `headers`, `oauth`, `timeout`
+
+    ```json
+    {
+      "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+      "mcpServers": {
+        "acme": {
+          "type": "http",
+          "url": "https://mcp.example.com/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="sse">
+    Use for a legacy HTTP+SSE server that specifically requires the older transport specification.
+
+    - **Required fields:** `type: "sse"`, `url`
+    - **Optional fields:** `headers`, `timeout`
+
+    ```json
+    {
+      "mcpServers": {
+        "legacy": {
+          "type": "sse",
+          "url": "https://mcp.example.com/sse"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Authentication and secrets
 
 ### Bearer tokens and API keys
+
+<Callout type="warn" title="Protect credentials">
+  Never commit tokens or client secrets directly into configuration files. Prefer environment variables, trusted secret evaluation commands, or managed OAuth.
+</Callout>
 
 Put credentials for a local process in `env`, or credentials for HTTP/SSE in `headers`. Reference an environment variable instead of committing the secret:
 
@@ -147,7 +205,9 @@ omp opens the authorization flow and stores the credential in the active profile
 }
 ```
 
-OAuth credentials are bound to the active profile and server URL. The same profile may reuse that credential for the same URL in another checkout. An explicit `Authorization` header takes precedence over managed OAuth, so remove a stale header before reauthorizing.
+<Callout type="warn" title="OAuth credential scoping">
+  OAuth credentials are bound to the active profile and server URL. An explicit `Authorization` header takes precedence over managed OAuth, so remove a stale header before reauthorizing. Because profiles may reuse credentials across checkouts pointing to identical URLs, isolate untrusted repositories in a dedicated profile.
+</Callout>
 
 ## Inspect and control servers
 
@@ -173,50 +233,47 @@ Connected servers may also publish prompts, resources, and notifications. `/mcp 
 
 ## Safety
 
-Treat every MCP definition as executable, trusted configuration:
-
-- A `stdio` server runs its configured command with your user permissions. Review project MCP files before opening an unfamiliar repository.
-- Grant the smallest useful filesystem roots, OAuth scopes, database permissions, and API permissions.
-- A remote server receives the arguments and data needed for each requested operation. Use only endpoints and server packages you trust.
-- Never commit tokens or client secrets. Prefer environment variables, a trusted secret command, or managed OAuth.
-- Because OAuth is profile-scoped by URL, an untrusted checkout defining the same URL can use that profile's stored credential. Use a separate profile for untrusted projects.
-- Disable an unwanted discovered server with `/mcp disable <name>` rather than editing another application's config.
+<Callout type="error" title="MCP servers run with elevated trust">
+  Treat every MCP definition as executable, trusted configuration:
+  - A `stdio` server runs its configured command with your user permissions. Review project MCP files before opening an unfamiliar repository.
+  - Grant the smallest useful filesystem roots, OAuth scopes, database permissions, and API permissions.
+  - A remote server receives the arguments and data needed for each requested operation. Use only endpoints and server packages you trust.
+  - Disable an unwanted discovered server with `/mcp disable <name>` rather than editing another application's config.
+</Callout>
 
 ## Troubleshooting
 
-### The server is missing from `/mcp list`
+<Accordions>
+  <Accordion title="The server is missing from /mcp list">
+    Check that the JSON parses and contains a top-level `mcpServers` object, then run `/mcp reload`. A user-level `disabledServers` entry may hide the server. Project sources are also skipped when `mcp.enableProjectConfig` is false. If the name exists in several sources, the higher-priority definition wins.
+</Accordion>
+  <Accordion title='A remote server says stdio server requires "command"'>
+    Add `"type": "http"` (or `"sse"` for a legacy server). Without `type`, omp assumes `stdio`.
+</Accordion>
+  <Accordion title="A local server will not connect">
+    Run `/mcp test <name>` and check that the executable is installed, `cwd` exists, arguments are correct, and required environment variables are available to the process that launched omp. A stdio server must reserve stdout for MCP protocol messages; send diagnostic logs to stderr.
+</Accordion>
+  <Accordion title="The server returns 401 or 403">
+    For managed OAuth, run `/mcp reauth <name>`. If needed, use `/mcp unauth <name>` first. For header authentication, confirm the environment variable is set and remove any stale explicit `Authorization` header that would override OAuth.
+</Accordion>
+  <Accordion title="The connection times out">
+    Set a larger per-server `timeout` in milliseconds, then reload. The default is 30 seconds; `0` disables client-side MCP timeouts. `OMP_MCP_TIMEOUT_MS` overrides every per-server timeout for the process.
 
-Check that the JSON parses and contains a top-level `mcpServers` object, then run `/mcp reload`. A user-level `disabledServers` entry may hide the server. Project sources are also skipped when `mcp.enableProjectConfig` is false. If the name exists in several sources, the higher-priority definition wins.
-
-### A remote server says `stdio server requires "command"`
-
-Add `"type": "http"` (or `"sse"` for a legacy server). Without `type`, omp assumes `stdio`.
-
-### A local server will not connect
-
-Run `/mcp test <name>` and check that the executable is installed, `cwd` exists, arguments are correct, and required environment variables are available to the process that launched omp. A stdio server must reserve stdout for MCP protocol messages; send diagnostic logs to stderr.
-
-### The server returns 401 or 403
-
-For managed OAuth, run `/mcp reauth <name>`. If needed, use `/mcp unauth <name>` first. For header authentication, confirm the environment variable is set and remove any stale explicit `Authorization` header that would override OAuth.
-
-### The connection times out
-
-Set a larger per-server `timeout` in milliseconds, then reload. The default is 30 seconds; `0` disables client-side MCP timeouts. `OMP_MCP_TIMEOUT_MS` overrides every per-server timeout for the process.
-
-```json
-{
-  "mcpServers": {
-    "slow-server": {
-      "type": "http",
-      "url": "https://mcp.example.com/mcp",
-      "timeout": 120000
+    ```json
+    {
+      "mcpServers": {
+        "slow-server": {
+          "type": "http",
+          "url": "https://mcp.example.com/mcp",
+          "timeout": 120000
+        }
+      }
     }
-  }
-}
-```
+    ```
 
-Use `/mcp reconnect <name>` for a transient failure. Use `/mcp reload` after changing files or when discovery itself is wrong.
+    Use `/mcp reconnect <name>` for a transient failure. Use `/mcp reload` after changing files or when discovery itself is wrong.
+</Accordion>
+</Accordions>
 
 ## Server field reference
 
@@ -250,10 +307,12 @@ Those are the defaults. `notificationDebounceMs` controls how long resource upda
 
 ## Related
 
-- [Custom tools](/docs/custom-tools) — write a small native tool when no suitable MCP server exists.
-- [MCP server authoring](/docs/mcp-authoring) — build and package a server of your own.
-- [Settings](/docs/settings) — configure project discovery, notifications, and result rendering.
-- [Plugins](/docs/plugins) — distribute MCP definitions with other omp extensions.
+<Cards>
+  <Card title="MCP server authoring" description="Build and package a server of your own" href="mcp-authoring" />
+  <Card title="Custom tools" description="Write a small native tool when no MCP server exists" href="custom-tools" />
+  <Card title="Settings" description="Configure project discovery, notifications, and rendering" href="settings" />
+  <Card title="Plugins" description="Distribute MCP definitions with other omp extensions" href="plugins" />
+</Cards>
 
 ---
 

@@ -126,6 +126,8 @@ These references work through omp's GitHub-backed reading support and do not dep
 
 ## Approvals, isolation, and cached data
 
+<Callout type="warn">
+
 GitHub access follows three visible boundaries:
 
 - **GitHub permissions:** omp can access only what the active `gh` account can access. It cannot bypass organization SSO, repository permissions, branch protection, or fork restrictions.
@@ -140,6 +142,8 @@ Fresh entries are reused for 5 minutes. Older entries are returned while omp ref
 omp config set github.cache.enabled false
 ```
 
+</Callout>
+
 ## Settings reference
 
 Defaults work after `gh` authentication except that the broader GitHub capability must be enabled.
@@ -152,7 +156,7 @@ Defaults work after `gh` authentication except that the broader GitHub capabilit
 | `github.cache.hardTtlSec` | `604800` | Maximum age retained for a cached view. |
 | `worktree.base` | unset | Base for omp-managed worktrees; unset normally resolves to `~/.omp/wt`. `OMP_WORKTREE_DIR` takes precedence. |
 
-Inspect the effective values with `omp config get <setting>`, or see [Settings](/docs/settings) for config files and precedence.
+Inspect the effective values with `omp config get <setting>`, or see [Settings](settings) for config files and precedence.
 
 ## Troubleshooting
 

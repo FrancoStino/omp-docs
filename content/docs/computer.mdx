@@ -31,8 +31,8 @@ Use the narrowest surface that can finish the task.
 
 | Need | Use |
 | --- | --- |
-| Read or interact with a web page through DOM and web accessibility information | [Browser control](/docs/web) |
-| Work in a Chromium tab, including an authenticated Chrome tab connected through the browser relay | [Browser control](/docs/web) |
+| Read or interact with a web page through DOM and web accessibility information | [Browser control](web) |
+| Work in a Chromium tab, including an authenticated Chrome tab connected through the browser relay | [Browser control](web) |
 | Operate a native app, browser toolbar, file picker, system dialog, or the desktop itself | Computer control |
 | Interact with a web app whose controls are not usable through the page structure | Try browser control first; use computer control only when pixels or native chrome are required |
 
@@ -65,7 +65,7 @@ tools:
 
 In that mode, omp can perform a run it has classified as inspection-only, while desktop input and mutation require confirmation. The mode applies to other tools too. A per-tool `computer: allow`, `prompt`, or `deny` overrides the global mode; use `deny` when desktop control must remain blocked even if someone enables it for the session. Avoid `allow` and `--yolo` on a desktop that contains valuable accounts or data.
 
-Changes made with `/computer` are temporary and do not rewrite the config file. Start a new session after editing a settings file. See [Settings](/docs/settings) for config locations and precedence.
+Changes made with `/computer` are temporary and do not rewrite the config file. Start a new session after editing a settings file. See [Settings](settings) for config locations and precedence.
 
 ### Limit what screenshots include
 
@@ -112,6 +112,7 @@ A useful request names the application or window, states the allowed changes, an
 In the open Calendar app, inspect next Tuesday and summarize my free blocks.
 Do not create or edit events.
 ```
+
 
 ```text
 In the focused spreadsheet, enter these four values into cells B2:B5 and save
@@ -184,41 +185,45 @@ Capabilities are runtime facts. A supported operating system can still lack capt
 
 ## Troubleshooting
 
-### Computer control is missing
+<Accordions>
+  <Accordion title="Computer control is missing">
 
 Run `/computer status`, then `/computer on`. If the response says it is unavailable, confirm `computer.enabled` in `/settings` or the effective config and start a new session after file-based changes. Also check that a restrictive tool list did not exclude computer control.
-
-### Status says `session not started`
+</Accordion>
+  <Accordion title="Status says `session not started`">
 
 This is normal before the first request. Ask for a non-mutating inspection, then run `/computer status` again. The initialized status includes the selected backend and permission state.
-
-### Screenshots are blank or unavailable
+</Accordion>
+  <Accordion title="Screenshots are blank or unavailable">
 
 - On macOS, grant Screen Recording and restart the application that launched omp.
 - On X11, confirm omp is running in the intended graphical session and can access `DISPLAY`.
 - On released Wayland builds, screenshot capture is unavailable by design; use accessibility inspection where possible or use an X11 session.
 - If the wrong monitor appears, ask omp to list displays, set `computer.display` to the intended ID, and begin a new session after editing the config file.
 
-### omp can inspect but cannot click or type
+</Accordion>
+  <Accordion title="omp can inspect but cannot click or type">
 
 On macOS, check Accessibility permission. On Wayland, accept the RemoteDesktop portal when input is first needed, or arrange `LIBEI_SOCKET`; focus the target before requesting native input. On every platform, `/computer status` distinguishes capture, input, and accessibility permission.
-
-### Background input is unavailable
+</Accordion>
+  <Accordion title="Background input is unavailable">
 
 Ask omp to use the app's accessibility control. If that is not possible, explicitly allow foreground input, or focus the window yourself on Wayland. Do not assume a rejected background action landed.
-
-### The wrong control was targeted
+</Accordion>
+  <Accordion title="The wrong control was targeted">
 
 Ask omp to stop, inspect the window again, and identify the semantic control before retrying. If the app has no useful accessibility information, request a new screenshot of the same window. Do not reuse positions after the window moves, resizes, changes content, or switches displays.
-
-### Accessibility information is empty or stale
+</Accordion>
+  <Accordion title="Accessibility information is empty or stale">
 
 The application may not expose its controls through the OS accessibility service, or that service may be unavailable. Confirm Accessibility or AT-SPI support, then ask omp for a fresh inspection. Fall back to screenshots only when the target is visually unambiguous.
-
-### Wayland asks again for input permission
+</Accordion>
+  <Accordion title="Wayland asks again for input permission">
 
 That is expected. omp does not persist the RemoteDesktop portal grant; it ends when the desktop-control session closes.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/computer) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

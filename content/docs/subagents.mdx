@@ -47,9 +47,9 @@ You may name a specialist in your prompt, or let omp choose. The current bundled
 
 For example: “Use the librarian to verify the upstream retry semantics,” “Ask the reviewer to inspect only the current diff,” or “Use sonic workers to update these file-disjoint fixtures.” Exact custom names are case-sensitive.
 
-Open `/agents` to inspect the available definitions, their source, whether they are enabled, and their model, prewalk, and advisor routing. Use `Ctrl`+`R` there after changing a definition on disk. To create or customize a specialist, see [Authoring subagents](/docs/subagent-authoring).
+Open `/agents` to inspect the available definitions, their source, whether they are enabled, and their model, prewalk, and advisor routing. Use `Ctrl`+`R` there after changing a definition on disk. To create or customize a specialist, see [Authoring subagents](subagent-authoring).
 
-If you are unsure whether to change a specialist definition or only the model behind it, see [Agents & model roles](/docs/agents-and-roles).
+If you are unsure whether to change a specialist definition or only the model behind it, see [Agents & model roles](agents-and-roles).
 
 ## What you see while workers run
 
@@ -92,6 +92,8 @@ Prefer a follow-up to the same worker when it already has the right context. Use
 
 ## Shared checkout or isolated workspace
 
+<Callout type="warn">
+
 By default, subagents work in the same checkout as the main session. That is fast and lets everyone see current changes, but concurrent writers can overwrite assumptions or produce interleaved edits. Give non-isolated workers file-disjoint ownership and keep final integration in one place.
 
 For stronger edit separation, open `/settings`, choose the **Tasks → Isolation** group, and set **Isolation Mode** to **Auto**. Then ask for it directly:
@@ -104,7 +106,11 @@ Isolation protects concurrent checkout edits; it is **not** a general security s
 
 Even isolated edits can conflict when integrated, especially when workers touch the same lines. Divide ownership first, review the resulting diff, and ask the main session to verify the combined behavior.
 
+</Callout>
+
 ## Cost, safety, and limits
+
+<Callout type="warn">
 
 Every worker is a separate model session, so parallelism can multiply token use, provider requests, and cost. Agent Hub shows measured per-worker and aggregate usage. Start with the smallest useful fan-out, use `scout` or `sonic` only for work suited to them, and stop workers whose assignments have become obsolete. Advisor and prewalk routing may add model calls of their own.
 
@@ -124,7 +130,9 @@ The important defaults are:
 | `task.isolation.apply` | `true` | Apply successful isolated changes to the parent checkout. |
 | `task.isolation.merge` | `patch` | Integrate isolated changes as patches rather than branches. |
 
-Use `/settings` for these controls and `/agents` for per-agent enablement and model routing. See [Settings](/docs/settings) for editing `~/.omp/agent/config.yml` directly.
+Use `/settings` for these controls and `/agents` for per-agent enablement and model routing. See [Settings](settings) for editing `~/.omp/agent/config.yml` directly.
+
+</Callout>
 
 ## Troubleshooting
 

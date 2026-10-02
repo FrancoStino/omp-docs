@@ -28,7 +28,9 @@ Describe the outcome you want, for example: “Rename `issueToken` to `mintToken
 | Embed omp and handle interactive UI requests | `omp --mode rpc-ui` | RPC plus extension/tool UI requests for the host to render | Client shutdown, stdin EOF, or process interruption |
 | Run omp inside an ACP-capable editor | Configure the editor to spawn `omp acp` | The editor owns the conversation, changes, terminals, and approvals | The ACP client disconnects or stops the process |
 
-`--mode` accepts exactly `text`, `json`, `rpc`, `rpc-ui`, or `acp`. Any explicit `--mode` selects a headless mode—even `--mode text`. Bare `omp` is interactive only when you have not supplied `--print`, have not selected a mode, and stdin did not provide a prompt.
+<Callout type="info" title="Launch mode precedence">
+  `--mode` accepts exactly `text`, `json`, `rpc`, `rpc-ui`, or `acp`. Any explicit `--mode` selects a headless mode—even `--mode text`. Bare `omp` is interactive only when you have not supplied `--print`, have not selected a mode, and stdin did not provide a prompt.
+</Callout>
 
 ### Interactive terminal UI
 
@@ -59,7 +61,7 @@ By default, stdout contains only the final assistant text. Add `--print-thoughts
 omp -p --print-thoughts "Explain this stack trace"
 ```
 
-A fresh one-shot run ignores `plan.defaultOnStartup` because there is no review surface. Use `--plan-yolo` for the supported headless plan-then-execute flow; see [Plan mode](/docs/plan).
+A fresh one-shot run ignores `plan.defaultOnStartup` because there is no review surface. Use `--plan-yolo` for the supported headless plan-then-execute flow; see [Plan mode](plan).
 
 ### JSON event stream
 
@@ -75,9 +77,9 @@ When the session has a header, it is the first JSON line; session events follow.
 
 These are integration transports, not alternate terminal interfaces:
 
-- **RPC** is omp's native newline-delimited protocol. It owns stdin and stdout and emits `ready` before accepting commands. `@file` launch arguments are rejected because the client must provide prompts and context through the protocol. See [RPC mode](/docs/rpc).
+- **RPC** is omp's native newline-delimited protocol. It owns stdin and stdout and emits `ready` before accepting commands. `@file` launch arguments are rejected because the client must provide prompts and context through the protocol. See [RPC mode](rpc).
 - **RPC UI** is RPC for a host that also renders omp's interactive extension and tool UI requests. It is not a decorated version of `rpc`; do not choose it unless the host implements that UI exchange. It also disables PTY-backed shell execution.
-- **ACP** is the standard editor integration. Prefer `omp acp`; `omp --mode acp` is equivalent. The editor launches the process and creates sessions over stdio. Running it by hand prints an explanation on stderr and waits for protocol frames. See [ACP](/docs/acp).
+- **ACP** is the standard editor integration. Prefer `omp acp`; `omp --mode acp` is equivalent. The editor launches the process and creates sessions over stdio. Running it by hand prints an explanation on stderr and waits for protocol frames. See [ACP](acp).
 
 Closing RPC stdin tells omp that the client is gone: it rejects pending UI requests, drains accepted commands, disposes the session, and exits. ACP exits when its peer disconnects. Keep protocol stdout reserved for the protocol; send your application's logs elsewhere.
 
@@ -115,7 +117,7 @@ Loop controls are intentionally distinct:
 - Run `/loop` again to disable Loop completely.
 - A count limit or duration deadline disables Loop automatically and shows why.
 
-By default, `loop.mode` is `prompt`, so each replay continues in the same conversation. The `compact` setting compacts before each replay; `reset` starts a fresh session before each replay. Configure these only when repeated context is the problem—see [Settings](/docs/settings).
+By default, `loop.mode` is `prompt`, so each replay continues in the same conversation. The `compact` setting compacts before each replay; `reset` starts a fresh session before each replay. Configure these only when repeated context is the problem—see [Settings](settings).
 
 ### Force one tool call with `/force`
 
@@ -134,7 +136,7 @@ Both spellings are accepted. With no inline prompt, the force applies to the nex
 
 Force is not a persistent mode. The next model call must invoke that active tool once, then the agent turn ends without another tool call. The following turn is normal again. There is no Force badge because there is no lasting state; omp shows a confirmation when the next turn is pinned.
 
-Force fails rather than guessing when the named tool is inactive or the current model cannot force a named tool. This matters in [Plan mode](/docs/plan), where write-capable tools are intentionally unavailable.
+Force fails rather than guessing when the named tool is inactive or the current model cannot force a named tool. This matters in [Plan mode](plan), where write-capable tools are intentionally unavailable.
 
 ### Request priority serving with `/fast`
 
@@ -153,7 +155,9 @@ The setting is session-persisted and scoped independently to the OpenAI, Anthrop
 
 When priority is actually active, the model segment shows the Fast icon when the theme provides one. `/fast status` is the direct check for the current model family's configured state; `/fast on` reports when that model has no compatible priority control. If a provider rejects priority serving, omp retries without it, turns Fast off for that family, and shows a warning.
 
-Priority service can cost more and contributes to premium-request accounting. Check `/usage` or `omp stats` rather than assuming lower latency is free.
+<Callout type="warn" title="Priority serving costs">
+  Priority service can cost more and contributes to premium-request accounting. Check `/usage` or `omp stats` rather than assuming lower latency is free.
+</Callout>
 
 ## How the controls combine
 
@@ -161,7 +165,7 @@ Priority service can cost more and contributes to premium-request accounting. Ch
 | --- | --- |
 | Loop + Fast | Every repeated turn uses Fast when the active model supports the selected family's priority tier. |
 | Loop + Force | Only the first forthcoming model call is forced. Later loop re-submissions are unforced. |
-| Loop + active Goal | Loop takes precedence over automatic Goal continuation until Loop is disabled. Use [Goal mode](/docs/goal) for objective-driven autonomy instead of stacking both without a reason. |
+| Loop + active Goal | Loop takes precedence over automatic Goal continuation until Loop is disabled. Use [Goal mode](goal) for objective-driven autonomy instead of stacking both without a reason. |
 | Loop + Plan, Prewalk, Goal, or Vibe | The controls may still be active, but the single mode segment shows the higher-priority work state instead of Loop. This is display priority, not proof that Loop is off. |
 | `loop.mode: reset` + Vibe | The combination is rejected: omp disables Loop and tells you to exit Vibe before using reset loops. |
 | Force + Plan | Force can select only tools active in Plan's read-only environment. |
@@ -173,41 +177,45 @@ Fast has its own model-segment icon, so it remains visible independently of the 
 
 Several deeper features change how omp approaches work. They are available within the appropriate launch modes and have their own controls:
 
-- [Plan mode](/docs/plan) — review an approach before implementation.
-- [Goal mode](/docs/goal) — pursue a durable objective across turns.
-- [Vibe mode](/docs/vibe) — coordinate parallel workers.
-- [Prewalk](/docs/prewalk) — hand planned implementation to a faster model.
-- [Advisor](/docs/advisor) — passively review work and surface concerns.
+- [Plan mode](plan) — review an approach before implementation.
+- [Goal mode](goal) — pursue a durable objective across turns.
+- [Vibe mode](vibe) — coordinate parallel workers.
+- [Prewalk](prewalk) — hand planned implementation to a faster model.
+- [Advisor](advisor) — passively review work and surface concerns.
 
 Use those pages for their lifecycle and safety controls. Use this page to choose how omp is launched and whether the current terminal turn should repeat, force one tool, or request priority serving.
 
 ## Troubleshooting
 
-**The terminal UI opened, but I wanted output for a script.** 
- Use `-p` for final text or `--mode json` for events. A bare positional prompt does not make omp headless.
-
-**A piped command appears stuck before any work starts.** 
- omp must read stdin through EOF. Check that the producer closes the pipe; after one second omp reports what it is waiting for on stderr.
-
-**`omp acp` appears idle.** 
- That is a server waiting for an ACP client, not a standalone UI. Configure your editor to spawn it; see [ACP](/docs/acp).
-
-**Loop is repeating but its badge disappeared.** 
- Plan, Prewalk, Goal, and Vibe take display priority in the one mode segment. Check `/loop` in slash autocomplete. Run `/loop` to disable it.
-
-**`/force` says the tool is not active.** 
- Run `/tools`. Change the current work mode if it intentionally removed the tool, or choose one of the active names.
-
-**`/fast on` is unavailable or turned itself off.** 
- The current model either has no supported priority path or its provider rejected the request. Continue at the normal tier or switch to a supported model; do not repeatedly toggle after a rejection.
+<Accordions>
+  <Accordion title="The terminal UI opened, but I wanted output for a script">
+    Use `-p` for final text or `--mode json` for events. A bare positional prompt does not make omp headless.
+</Accordion>
+  <Accordion title="A piped command appears stuck before any work starts">
+    omp must read stdin through EOF. Check that the producer closes the pipe; after one second omp reports what it is waiting for on stderr.
+</Accordion>
+  <Accordion title="omp acp appears idle">
+    That is a server waiting for an ACP client, not a standalone UI. Configure your editor to spawn it; see [ACP](acp).
+</Accordion>
+  <Accordion title="Loop is repeating but its badge disappeared">
+    Plan, Prewalk, Goal, and Vibe take display priority in the one mode segment. Check `/loop` in slash autocomplete. Run `/loop` to disable it.
+</Accordion>
+  <Accordion title="/force says the tool is not active">
+    Run `/tools`. Change the current work mode if it intentionally removed the tool, or choose one of the active names.
+</Accordion>
+  <Accordion title="/fast on is unavailable or turned itself off">
+    The current model either has no supported priority path or its provider rejected the request. Continue at the normal tier or switch to a supported model; do not repeatedly toggle after a rejection.
+</Accordion>
+</Accordions>
 
 ## Related
 
-- [CLI reference](/docs/cli) — every launch flag and subcommand.
-- [Slash commands](/docs/slash) — full interactive command reference.
-- [Keybindings](/docs/keybindings) — defaults and remapping.
-- [RPC mode](/docs/rpc) — native embedding protocol.
-- [ACP](/docs/acp) — editor integration.
+<Cards>
+  <Card title="CLI reference" description="Every launch flag and subcommand" href="cli" />
+  <Card title="Slash commands" description="Full interactive command reference" href="slash" />
+  <Card title="Keybindings" description="Defaults and remapping" href="keybindings" />
+  <Card title="RPC mode" description="Native embedding protocol" href="rpc" />
+</Cards>
 
 ---
 

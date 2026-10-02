@@ -40,7 +40,7 @@ The focused surface decides what a key means. Reusing a key in separate contexts
 | Main prompt editor | Application actions (`app.*`) plus editor actions (`tui.editor.*` and `tui.input.*`). |
 | Autocomplete, history, and most pickers | Selection actions (`tui.select.*`): arrows move, `PageUp`/`PageDown` page, `Enter` confirms, and `Escape` cancels. |
 | `@` file picker | Type to fuzzy-filter project files, use `Up`/`Down`, accept with `Tab`, and dismiss with `Escape`. |
-| Plan approval | `Escape` cancels approval and returns to [plan-mode iteration](/docs/plan). |
+| Plan approval | `Escape` cancels approval and returns to [plan-mode iteration](plan). |
 
 ### Full-screen surfaces
 
@@ -145,7 +145,7 @@ Keybindings are separate from the main settings file:
 - Named profile: `~/.omp/profiles/<name>/agent/keybindings.yml`
 - Custom default-profile agent directory: `$PI_CODING_AGENT_DIR/keybindings.yml`
 
-A named profile inherits the default profile's bindings, then overrides them action by action. See [Settings](/docs/settings) for profile and directory configuration.
+A named profile inherits the default profile's bindings, then overrides them action by action. See [Settings](settings) for profile and directory configuration.
 
 Create the file if it does not exist. It is a YAML mapping from an exact action ID to one chord, an array of chords, or an empty array:
 
@@ -181,7 +181,8 @@ Legacy unqualified action names are migrated when loaded. A legacy `keybindings.
 
 ## Troubleshooting
 
-### A remap does not take effect
+<Accordions>
+  <Accordion title="A remap does not take effect">
 
 1. Confirm you edited `keybindings.yml` in the active profile's agent directory, not `config.yml`.
 2. Confirm the action ID exactly matches a table entry; action IDs are case-sensitive.
@@ -189,16 +190,19 @@ Legacy unqualified action names are migrated when loaded. A legacy `keybindings.
 4. Check that the YAML value is a string, array of strings, or `[]`.
 5. Run `/hotkeys` for an application action, or exercise an editor/picker action directly.
 
-### A chord still does nothing
+</Accordion>
+  <Accordion title="A chord still does nothing">
 
 Try one of the documented fallback chords. If the fallback works, the terminal is probably consuming or normalizing the original chord. This is common for `Ctrl`+`Enter`, `Shift`+`Enter`, Option combinations, and clipboard keys.
 
 Also check the rest of `keybindings.yml` for the same chord. Assigning it to two actions in one context creates an ambiguous remap.
+</Accordion>
+  <Accordion title="The key does something different">
 
-### The key does something different
-
-Check the focused surface. Editor, picker, `/tree`, `/extensions`, `/agents`, and Agent Hub controls are context-sensitive. Press `Escape` to close the current overlay, then retry the shortcut in the main prompt editor. See [Slash commands](/docs/slash) for command alternatives to common shortcuts.
+Check the focused surface. Editor, picker, `/tree`, `/extensions`, `/agents`, and Agent Hub controls are context-sensitive. Press `Escape` to close the current overlay, then retry the shortcut in the main prompt editor. See [Slash commands](slash) for command alternatives to common shortcuts.
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/keybindings) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
+</Accordion>
+</Accordions>

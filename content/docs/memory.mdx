@@ -3,7 +3,7 @@ title: "Memory"
 description: "Carry durable preferences, decisions, and project knowledge into later sessions. Memory is off by default; choose a local or remote backend, control its…"
 ---
 
-Memory helps omp continue work without making you restate durable facts such as repository conventions, architectural decisions, and review preferences. It is separate from [compaction](/docs/compaction): compaction shortens one session, while memory can affect future sessions.
+Memory helps omp continue work without making you restate durable facts such as repository conventions, architectural decisions, and review preferences. It is separate from [compaction](compaction): compaction shortens one session, while memory can affect future sessions.
 
 Memory is **off by default**. If you want it, open `/settings`, select the **Memory** tab, and choose one backend. Start with `mnemopi` for searchable memory stored on this machine, `local` for automatic project summaries, or `hindsight` when you already operate a Hindsight service.
 
@@ -28,13 +28,13 @@ omp config set memory.backend hindsight
 omp config get memory.backend
 ```
 
-`/settings` writes the global config and switches the active backend when you save it. Shell or YAML changes apply to new omp processes. For one repository only, put the same keys in `<repo>/.omp/config.yml`; project settings override the global file. See [Settings](/docs/settings) for paths and precedence.
+`/settings` writes the global config and switches the active backend when you save it. Shell or YAML changes apply to new omp processes. For one repository only, put the same keys in `<repo>/.omp/config.yml`; project settings override the global file. See [Settings](settings) for paths and precedence.
 
 ## Privacy, scope, and defaults
 
 Enabling memory changes what persists and, depending on the backend, what may cross a network boundary.
 
-- **Off means no memory processing.** It does not disable ordinary session persistence. Memory commands also do not erase files under `~/.omp/agent/sessions/`; manage those separately through [Sessions](/docs/sessions).
+- **Off means no memory processing.** It does not disable ordinary session persistence. Memory commands also do not erase files under `~/.omp/agent/sessions/`; manage those separately through [Sessions](sessions).
 - **Local stores generated artifacts locally**, under `~/.omp/agent/memories/<encoded-project>/` by default. Its extraction and consolidation passes use your configured model roles, so past session text can still be sent to that model provider. Generated outputs are filtered for common token and secret patterns, but do not intentionally ask omp to remember secrets.
 - **Mnemopi stores its SQLite banks locally**, under `~/.omp/agent/memories/mnemopi/` by default. Local embeddings may download and run an embedding model. Its default `llmMode: smol` uses your configured online `tiny` / `smol` model for LLM-backed extraction; use `llmMode: none` when you want no LLM-backed memory processing.
 - **Hindsight stores durable memory on the configured server.** With `autoRetain: true` (the default), omp sends user and assistant text every three user turns and at session boundaries. It omits tool calls, tool results, and thinking blocks. Recall and synthesis queries also go to that server.
@@ -48,7 +48,9 @@ Choose scope before accumulating sensitive data:
 | `per-project` | One isolated bank derived from the absolute working directory. This is the default. | One isolated bank per repository name (or cwd name outside Git). Linked worktrees of one repository share the primary checkout's name. |
 | `per-project-tagged` | Writes to the project bank; recall combines it with the shared global bank. | Writes project-tagged data to one shared bank; recall combines that project's tagged memories with untagged global memories. This is the default. |
 
-For client work or other hard boundaries, prefer `per-project`. `per-project-tagged` is convenient, but intentionally makes untagged global knowledge visible alongside project knowledge.
+<Callout type="warn" title="Data privacy and scoping">
+  For client work or other hard boundaries, prefer `per-project`. `per-project-tagged` is convenient, but intentionally makes untagged global knowledge visible alongside project knowledge. Enabling a remote backend such as Hindsight sends user and assistant text across the network.
+</Callout>
 
 ## Use memory in conversation
 
@@ -241,7 +243,7 @@ export HINDSIGHT_API_TOKEN='replace-me'
 omp
 ```
 
-`HINDSIGHT_*` environment variables override matching `hindsight.*` settings. See [Environment variables](/docs/env) for the override names and parsing rules.
+`HINDSIGHT_*` environment variables override matching `hindsight.*` settings. See [Environment variables](env) for the override names and parsing rules.
 
 ### Connection, banks, and retention
 
@@ -282,24 +284,38 @@ omp
 
 ## Troubleshooting
 
-**`/memory view` is empty after enabling local memory.** Local memory only processes persisted primary sessions, skips sessions active within the last 12 hours by default, and performs maintenance at startup. Run `/memory enqueue`, exit normally, and start omp again after eligible sessions exist. Also make sure the `default` and `smol` model roles have usable credentials.
+<Accordions>
+  <Accordion title="/memory view is empty after enabling local memory">
+    Local memory only processes persisted primary sessions, skips sessions active within the last 12 hours by default, and performs maintenance at startup. Run `/memory enqueue`, exit normally, and start omp again after eligible sessions exist. Also make sure the `default` and `smol` model roles have usable credentials.
+</Accordion>
+  <Accordion title="Mnemopi is enabled but does not remember or recall">
+    Run `/memory diagnose` and `/memory stats`. Startup is best-effort: a database, embedding-model, or LLM initialization failure leaves the coding session usable but memory inert. Try `mnemopi.noEmbeddings: true` to isolate embedding problems, and use `mnemopi.llmMode: none` to isolate LLM configuration.
+</Accordion>
+  <Accordion title="Hindsight is enabled but nothing appears">
+    Confirm the effective backend and endpoint:
 
-**Mnemopi is enabled but does not remember or recall.** Run `/memory diagnose` and `/memory stats`. Startup is best-effort: a database, embedding-model, or LLM initialization failure leaves the coding session usable but memory inert. Try `mnemopi.noEmbeddings: true` to isolate embedding problems, and use `mnemopi.llmMode: none` to isolate LLM configuration.
+    ```bash
+    omp config get memory.backend
+    omp config get hindsight.apiUrl
+    ```
 
-**Hindsight is enabled but nothing appears.** Confirm the effective backend and endpoint:
+    Then run `/memory diagnose`. Check that the server is reachable and that `HINDSIGHT_API_TOKEN` or `hindsight.apiToken` is valid. Request failures do not stop the coding session; enable `hindsight.debug` when you need backend logs.
+</Accordion>
+  <Accordion title="One project sees knowledge from another">
+    Check `mnemopi.scoping` or `hindsight.scoping`. Switch to `per-project` for isolation, then clear the old local banks or remove the old Hindsight bank/data separately; changing scope does not erase previously stored knowledge.
+</Accordion>
+  <Accordion title="Memory is stale">
+    Ask omp to verify it against the current repository. For one Mnemopi fact, ask to update or forget it. For local summaries, use `/memory clear` followed by `/memory enqueue` and a later restart. For Hindsight, remove or correct the remote record in Hindsight; `/memory clear` only clears the current session's local recall state.
+</Accordion>
+</Accordions>
 
-```bash
-omp config get memory.backend
-omp config get hindsight.apiUrl
-```
+## Related
 
-Then run `/memory diagnose`. Check that the server is reachable and that `HINDSIGHT_API_TOKEN` or `hindsight.apiToken` is valid. Request failures do not stop the coding session; enable `hindsight.debug` when you need backend logs.
-
-**One project sees knowledge from another.** Check `mnemopi.scoping` or `hindsight.scoping`. Switch to `per-project` for isolation, then clear the old local banks or remove the old Hindsight bank/data separately; changing scope does not erase previously stored knowledge.
-
-**Memory is stale.** Ask omp to verify it against the current repository. For one Mnemopi fact, ask to update or forget it. For local summaries, use `/memory clear` followed by `/memory enqueue` and a later restart. For Hindsight, remove or correct the remote record in Hindsight; `/memory clear` only clears the current session's local recall state.
-
-See [Compaction](/docs/compaction) for in-session context management and [Settings](/docs/settings) for config locations, project overrides, and precedence.
+<Cards>
+  <Card title="Compaction" description="In-session context management and reduction methods" href="compaction" />
+  <Card title="Sessions" description="Stored history, resume, branches, and persistence" href="sessions" />
+  <Card title="Settings" description="Configuration files, precedence, and command options" href="settings" />
+</Cards>
 
 ---
 
