@@ -675,18 +675,23 @@ function Inner({children, sessionId}: { children: ReactNode; sessionId: string }
             api: '/api/chat',
         }),
     });
-    const [loaded, setLoaded] = useState(false);
+    // Restore once per mount directly during render via lazy state: useChat
+    // starts empty, so seed the message store before the first paint. The
+    // persist effect below waits for `hydrated` so it never overwrites
+    // stored history with the initial [].
+    const [hydrated, setHydrated] = useState(false);
+    const hydratedRef = useRef(false);
 
-    // Restore once per mount. The persist effect below waits for `loaded`,
-    // otherwise the first render (messages=[]) would overwrite the stored
-    // history before it is read.
     useEffect(() => {
-        chat.setMessages(readSession(sessionId));
-        setLoaded(true);
+        if (!hydratedRef.current) {
+            hydratedRef.current = true;
+            chat.setMessages(readSession(sessionId));
+            queueMicrotask(() => setHydrated(true));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sessionId]);
+    }, []);
 
-    usePersistSession(sessionId, chat.messages, loaded);
+    usePersistSession(sessionId, chat.messages, hydrated);
 
     return <ChatContext value={useMemo(() => ({chat}), [chat])}>{children}</ChatContext>;
 }
