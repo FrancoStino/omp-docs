@@ -88,9 +88,11 @@ function readSession(id: string): ChatUIMessage[] {
 }
 
 /** Persist messages after every chat update, and keep the index title in sync
- with the first user message. */
-function usePersistSession(id: string, messages: ChatUIMessage[]) {
+ with the first user message. Skips until `ready` so the mount-time
+ empty message list never wipes stored history. */
+function usePersistSession(id: string, messages: ChatUIMessage[], ready: boolean) {
     useEffect(() => {
+        if (!ready) return;
         try {
             localStorage.setItem(StoragePrefix + id, JSON.stringify(messages));
             const index = readIndex();
@@ -104,7 +106,7 @@ function usePersistSession(id: string, messages: ChatUIMessage[]) {
         } catch {
             // private mode / quota: chat still works, it just won't persist
         }
-    }, [id, messages]);
+    }, [id, messages, ready]);
 }
 
 function titleOf(messages: ChatUIMessage[]): string {
@@ -673,15 +675,18 @@ function Inner({children, sessionId}: { children: ReactNode; sessionId: string }
             api: '/api/chat',
         }),
     });
+    const [loaded, setLoaded] = useState(false);
 
-    // `messages` is not a valid useChat option: after mount, the stored
-    // messages for a session are pushed in once.
+    // Restore once per mount. The persist effect below waits for `loaded`,
+    // otherwise the first render (messages=[]) would overwrite the stored
+    // history before it is read.
     useEffect(() => {
         chat.setMessages(readSession(sessionId));
+        setLoaded(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionId]);
 
-    usePersistSession(sessionId, chat.messages);
+    usePersistSession(sessionId, chat.messages, loaded);
 
     return <ChatContext value={useMemo(() => ({chat}), [chat])}>{children}</ChatContext>;
 }

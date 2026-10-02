@@ -1,6 +1,5 @@
 import type {BaseLayoutProps} from 'fumadocs-ui/layouts/shared';
 import {PiLogo} from '@/components/pi-logo';
-import {SyncChipNav} from '@/components/sync-chip';
 
 export function baseOptions(): BaseLayoutProps {
     return {
@@ -12,7 +11,6 @@ export function baseOptions(): BaseLayoutProps {
                     <span className="font-semibold tracking-tight">OMP Docs</span>
                 </span>
             ),
-            children: <SyncChipNav/>,
         },
     };
 }
