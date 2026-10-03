@@ -134,9 +134,6 @@ jobs:
         if: steps.diff.outputs.empty == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        permissions:
-          contents: write
-          pull-requests: write
         run: |
           TO="${{ steps.range.outputs.to }}"
           SHORT="$(echo "$TO" | cut -c1-7)"
