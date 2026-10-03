@@ -31,9 +31,17 @@ jobs:
         run: |
           LAST="${{ inputs.from_sha }}"
           if [ -z "$LAST" ]; then LAST="$(cat .docs-sync-state)"; fi
+          # Tags, not main: docs follow releases. Resolve the newest tag
+          # reachable on the default branch (fetch tags explicitly: a plain
+          # `git fetch <url> main` does not bring them). When several tags
+          # land the same day, TO is simply the newest one and the diff
+          # LAST...TO covers every release in between in a single run —
+          # no per-tag runs, no PR per release.
+          git fetch --tags --depth=50 https://github.com/can1357/oh-my-pi.git
           git fetch --depth=50 https://github.com/can1357/oh-my-pi.git main
           TO="${{ inputs.to_sha }}"
-          if [ -z "$TO" ]; then TO="FETCH_HEAD"; fi
+          if [ -z "$TO" ]; then TO="$(git describe --tags --abbrev=0 FETCH_HEAD)"; fi
+          echo "resolved TO=$TO (LAST=$LAST)"
           # Deepen until LAST is present, else fail explicit without writing state
           for i in 1 2 3 4; do
             git cat-file -e "$LAST" 2>/dev/null && break
@@ -48,11 +56,15 @@ jobs:
         run: |
           LAST="${{ steps.range.outputs.last }}"
           TO="${{ steps.range.outputs.to }}"
-          FILTER="packages/** crates/** docs/** README.md AGENTS.md"
-          git diff --name-only "$LAST...$TO" -- $FILTER ':!**/*.test.*' ':!**/*.snap*' > changed.txt || true
+          # No path filter on purpose: a new feature can land anywhere
+          # (new file, new package, new crate) and a filter would silently
+          # skip it. Only test/snapshot noise is excluded. The AI script
+          # itself caps at 20 pages, so a huge diff cannot explode costs —
+          # unmapped files are reported, not rewritten.
+          git diff --name-only "$LAST...$TO" -- ':!**/*.test.*' ':!**/*.snap*' ':!**/__snapshots__/*' > changed.txt || true
           if [ ! -s changed.txt ]; then echo "empty=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           echo "empty=false" >> "$GITHUB_OUTPUT"
-          git diff -U3 "$LAST...$TO" -- $FILTER | head -c 200000 > code.diff
+          git diff -U3 "$LAST...$TO" -- ':!**/*.test.*' ':!**/*.snap*' ':!**/__snapshots__/*' | head -c 200000 > code.diff
           git log --oneline "$LAST..$TO" > commits.txt
           {
             echo "Upstream diff $LAST -> $TO"
@@ -98,6 +110,8 @@ jobs:
           SYNC_TO: ${{ steps.range.outputs.to }}
         run: |
           bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}"
+          REWRITTEN="$(grep -oE 'Rewritten: [0-9]+' ai-report.md | tail -1 | grep -oE '[0-9]+')"
+          echo "rewritten=${REWRITTEN:-0}" >> "$GITHUB_OUTPUT"
           echo "## ai-report" >> "$GITHUB_STEP_SUMMARY"
           cat ai-report.md >> "$GITHUB_STEP_SUMMARY"
 
@@ -118,7 +132,10 @@ jobs:
           bun run build
 
       - name: Update state files
-        if: steps.diff.outputs.empty == 'false'
+        # Only advance the cursor when the AI actually rewrote something.
+        # A skipped run (missing MODEL) or 0-rewrite run must NOT mark pages
+        # as synced, or the next run will silently skip them.
+        if: steps.diff.outputs.empty == 'false' && steps.ai.outputs.rewritten != '0'
         run: |
           TO="${{ steps.range.outputs.to }}"
           echo "$TO" > .docs-sync-state
@@ -131,7 +148,7 @@ jobs:
           } >> sync-body.md
 
       - name: Open or update rolling PR
-        if: steps.diff.outputs.empty == 'false'
+        if: steps.diff.outputs.empty == 'false' && steps.ai.outputs.rewritten != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
