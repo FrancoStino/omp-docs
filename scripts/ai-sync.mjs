@@ -23,14 +23,14 @@ const BASE = process.env.AI_BASE_URL?.replace(/\/$/, '');
 const KEY = process.env.AI_API_KEY;
 const MODEL = process.env.AI_MODEL;
 
-const MODEL_PLACEHOLDERS = new Set(['openrouter/free', 'free', 'openrouter', 'model', 'your-model']);
+const MODEL_PLACEHOLDERS = new Set(['free', 'openrouter', 'model', 'your-model']);
 
 if (!BASE || !KEY || !MODEL || MODEL_PLACEHOLDERS.has((MODEL ?? '').trim())) {
 	await writeFile(
 		reportFile,
-		`AI sync skipped: set a real model id in AI_MODEL (got "${MODEL ?? '(unset)'}"). "openrouter/free" is not a model — use e.g. meta-llama/llama-3.1-8b-instruct:free.\n`,
+		`AI sync skipped: set a real model id in AI_MODEL (got "${MODEL ?? '(unset)'}"). Use e.g. openrouter/free (random free router) or meta-llama/llama-3.1-8b-instruct:free.\n`,
 	);
-	console.log('AI sync skipped: missing or placeholder env (AI_MODEL must be a concrete id, not "openrouter/free")');
+	console.log('AI sync skipped: missing or placeholder env (AI_MODEL must be a concrete id like openrouter/free or a :free model)');
 	process.exit(0);
 }
 

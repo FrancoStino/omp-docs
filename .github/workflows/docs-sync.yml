@@ -31,17 +31,38 @@ jobs:
         run: |
           LAST="${{ inputs.from_sha }}"
           if [ -z "$LAST" ]; then LAST="$(cat .docs-sync-state)"; fi
-          # Tags, not main: docs follow releases. Resolve the newest tag
-          # reachable on the default branch (fetch tags explicitly: a plain
-          # `git fetch <url> main` does not bring them). When several tags
+          # Tags, not main: docs follow releases. Resolve the newest release
+          # tag via the GitHub API (one call) instead of `git fetch --tags`,
+          # which pulls ~700 unrelated tags every run. When several tags
           # land the same day, TO is simply the newest one and the diff
           # LAST...TO covers every release in between in a single run —
           # no per-tag runs, no PR per release.
-          git fetch --tags --depth=50 https://github.com/can1357/oh-my-pi.git
-          git fetch --depth=50 https://github.com/can1357/oh-my-pi.git main
-          TO="${{ inputs.to_sha }}"
-          if [ -z "$TO" ]; then TO="$(git describe --tags --abbrev=0 FETCH_HEAD)"; fi
-          echo "resolved TO=$TO (LAST=$LAST)"
+          # NOTE: `git fetch <url> main` never brings tags, and
+          # `git describe` needs them — hence the explicit tag fetch below.
+          TO_IN="${{ inputs.to_sha }}"
+          UPSTREAM=https://github.com/can1357/oh-my-pi.git
+          if [ -n "$TO_IN" ]; then
+            case "$TO_IN" in
+              v*[^0-9.]*) ;; # tag-like, fetch it below
+            esac
+            TO_TAG="$TO_IN"
+          else
+            TO_TAG="$(gh api repos/can1357/oh-my-pi/releases/latest -q .tag_name 2>/dev/null || git ls-remote --tags --refs "$UPSTREAM" 'v18.*' 2>/dev/null | awk -F/ '{print $NF}' | grep -v '{}' | sort -V | tail -1)"
+          fi
+          [ -z "$TO_TAG" ] && { echo "could not resolve latest release tag; aborting"; exit 1; }
+          case "$TO_TAG" in
+            v*)
+              git fetch --depth=50 "$UPSTREAM" main
+              git fetch --depth=50 "$UPSTREAM" tag "$TO_TAG"
+              TO="$(git rev-parse FETCH_HEAD)"
+              ;;
+            *)
+              # Raw SHA passed manually: resolve from main history.
+              git fetch --depth=50 "$UPSTREAM" main
+              TO="$TO_TAG"
+              ;;
+          esac
+          echo "resolved TO=$TO (tag=$TO_TAG LAST=$LAST)"
           # Deepen until LAST is present, else fail explicit without writing state
           for i in 1 2 3 4; do
             git cat-file -e "$LAST" 2>/dev/null && break
@@ -109,8 +130,8 @@ jobs:
           SYNC_FROM: ${{ steps.range.outputs.last }}
           SYNC_TO: ${{ steps.range.outputs.to }}
         run: |
-          bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}"
-          REWRITTEN="$(grep -oE 'Rewritten: [0-9]+' ai-report.md | tail -1 | grep -oE '[0-9]+')"
+          bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}" || true
+          REWRITTEN="$(grep -oE 'Rewritten: [0-9]+' ai-report.md 2>/dev/null | tail -1 | grep -oE '[0-9]+' || true)"
           echo "rewritten=${REWRITTEN:-0}" >> "$GITHUB_OUTPUT"
           echo "## ai-report" >> "$GITHUB_STEP_SUMMARY"
           cat ai-report.md >> "$GITHUB_STEP_SUMMARY"
