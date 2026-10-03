@@ -147,7 +147,7 @@ Do not assume the response arrives before the events: some prompt paths can begi
 
 ### Prompt completion
 
-`prompt` and `abort_and_prompt` acknowledge scheduling immediately. A normal agent run is complete only when:
+`prompt` and `abort_and_prompt` acknowledge after the message is admitted (queued, given an idle turn slot, or routed to an extension command), not before native `input` handlers or image preparation finish, and without waiting for the agent run. `abort_and_prompt` first awaits the abort, then acknowledges. A failure before admission is the command's error response; a failure after admission can still emit a later error response with the same `id`. A normal agent run is complete only when:
 
 ```text
 frame.type == "agent_end" and frame.isTerminal != false
@@ -265,6 +265,7 @@ A `?` below means optional. All commands accept `id?: string`. If supplied, a no
 | Session | `new_session` — `parentSession?: string` | `{ cancelled: boolean }` |
 | State | `get_state` | `RpcSessionState` below |
 | State | `set_fast_mode` — `enabled: boolean` | `{ enabled: boolean, active: boolean }` |
+| State | `goal` — `op: "get" \| "create" \| "resume" \| "pause" \| "drop"`, `objective?: string`, `token_budget?: number` | `{ goal: Goal \| null, state: GoalModeState \| null }` |
 | State | `get_available_commands` | `{ commands: RpcAvailableSlashCommand[] }` |
 | State | `set_todos` — `phases: TodoPhase[]` | `{ todoPhases: TodoPhase[] }` |
 | Host | `set_host_tools` — `tools: RpcHostToolDefinition[]` | `{ toolNames: string[] }` |
@@ -290,6 +291,7 @@ A `?` below means optional. All commands accept `id?: string`. If supplied, a no
 | Session | `export_html` — `outputPath?: string` | `{ path: string }` |
 | Session | `switch_session` — `sessionPath: string` | `{ cancelled: boolean }` |
 | Session | `branch` — `entryId: string` | `{ text: string, cancelled: boolean }` |
+| Session | `fork` — `entryId?: string` | `{ cancelled: boolean }` |
 | Session | `get_branch_messages` | `{ messages: Array<{ entryId: string, text: string }> }` |
 | Session | `get_last_assistant_text` | `{ text: string \| null }` |
 | Session | `set_session_name` — `name: string` | none |
@@ -300,6 +302,29 @@ A `?` below means optional. All commands accept `id?: string`. If supplied, a no
 | Login | `login` — `providerId: string` | `{ providerId: string }` |
 
 `get_messages_page` defaults to 100 messages and accepts limits from 1 through 256. Follow the opaque `nextCursor` until absent. Paging is snapshot-based: restart from no cursor after `stale_cursor`; wait for streaming/compaction to stop after `session_busy`.
+
+### `goal` payload
+
+`goal` manages goal mode with the same lifecycle as the interactive `/goal` command. Every op answers `{ goal: Goal | null, state: GoalModeState | null }`; `get_state` carries the same state as `goal`, and `goal_updated` events report every change, including those made by the agent's `goal` tool.
+
+- `get` only reads. It never starts a turn.
+- `create` needs `goal.enabled`, a non-empty `objective`, and no active or paused goal. It is refused in plan mode, and `token_budget` must be a positive integer. It adds the `goal` tool to the active tools.
+- `resume` resumes a paused goal (refused in plan mode). `pause` and `drop` restore the active tools from before the goal started.
+- Failures are ordinary `success: false` responses.
+
+Goals do not continue on their own over RPC unless `goal.continuationModes` contains `"rpc"`; this covers both `--mode rpc` and `--mode rpc-ui`. When enabled, `create`/`resume` and each terminal `agent_end` decide whether to start another goal turn, sent as a hidden `goal-continuation` message.
+
+- The turn starts once the yielding run has fully unwound. At that moment the goal must still be active, the session idle with nothing queued, plan mode off, open todos not all blocked, and the session not being disposed.
+- While the turn is decided but not yet started, `get_state.isSettled`, `prompt_result.sessionSettled` and `session_settled` treat the session as busy. `session_settled` follows if the continuation is abandoned.
+- `abort` stops continuation before the abort takes effect and pauses the interrupted goal, so a later prompt does not restart it; only `goal resume` does (or `drop` and a new `create`).
+- Continuation also stops after a goal turn with no new tool activity. The next turn that is not itself a goal continuation (a host prompt, steer or follow-up, for example) re-arms it.
+- A session change leaves the previous goal and its tool behind and restores a goal journaled in the target session. This covers `new_session`, `switch_session`, `branch`, `fork` and `open_session`, and the same changes made by extension commands. An active goal stays active across such a change and continues; a goal restored when the process starts is paused until `goal resume`. A goal turn that is waiting or becomes due while a change is in progress is held; if the change is cancelled, or leaves the session unchanged (tree navigation, reopening the open session), the goal continues. While such a turn is held, the session is not reported as settled.
+
+When the agent completes the goal, the goal tool is removed again and `get_state.goal` becomes `null`.
+
+### `fork`
+
+`fork` moves the process onto a new session file and returns `{ cancelled }`. With `entryId` (any `message` entry from `get_entries`, such as a user or assistant message), the new file holds the root-to-entry path including that entry plus the session's artifacts, so `artifact://` references still resolve, and its header's `parentSession` is the old session file. When `entryId` sits inside an assistant tool-call batch (the assistant message itself, or one of its tool results), the cut extends through the batch's recorded tool results so the fork never ends on tool calls whose results were dropped. This runs `session_before_branch`/`session_branch` hooks with reason `"fork"`. Read the new `sessionFile`/`sessionId` with `get_state`.
 
 ### Shared input objects
 
@@ -354,6 +379,7 @@ Useful result objects have these exact fields:
 | `systemPrompt?` | `string[]` |
 | `dumpTools?` | array of `{ name, description, parameters, examples? }` |
 | `contextUsage?` | `{ tokens: number, contextWindow: number, percent: number }` |
+| `goal?` | `Goal \| null` | Active goal state, or `null`. Returned by `get_state`. |
 
 `RpcAvailableSlashCommand` is `{ name, source, aliases?, description?, input?: { hint? }, subcommands?: Array<{ name, description?, usage? }> }`. `source` is `"builtin"`, `"skill"`, `"extension"`, `"custom"`, `"mcp_prompt"`, or `"file"`.
 
@@ -461,6 +487,10 @@ The spelling is `toolcall_*`, without an underscore between `tool` and `call`.
 | `host_tool_call`, `host_tool_cancel` | host-tool sub-protocol below |
 | `host_uri_request`, `host_uri_cancel` | host-URI sub-protocol below |
 | `subagent_lifecycle`, `subagent_progress`, `subagent_event` | subscription-gated subagent frames below |
+| `live_phase` | `phase: "connecting" \| "listening" \| "working" \| "speaking" \| "muted" \| "error"`; on every phase change |
+| `live_levels` | `input: number`, `output: number`; microphone and speaker RMS in `[0, 1]`, at most one frame per 100 ms |
+| `live_transcript` | `role: "user" \| "assistant"`, `turn: number`, `text: string`, `final: boolean`; later frames for the same `role` and `turn` replace earlier ones until `final: true` |
+| `live_end` | `error?: string`; exactly once per session when it ends, carrying the failure when it ended on one |
 
 Unknown event types should be ignored or logged, not treated as a fatal protocol error. New optional fields and event types can be added without changing the transport version.
 
@@ -493,6 +523,36 @@ Cancel/timeout:      { type: "extension_ui_response", id, cancelled: true, timed
 An unknown response id is ignored. When a request carries `timeout`, the host should enforce it and return the cancellation form with `timedOut: true`.
 
 OAuth `login` emits `open_url`, may emit notification frames, and can then ask for a pasted redirect or code with `input`. Providers that require interactive input before producing a URL are rejected in RPC mode; log in through interactive omp instead.
+
+## Live Voice Sub-Protocol
+
+RPC hosts can run a GPT live voice session (the realtime surface behind the terminal's `/live`) bound to the RPC session. The realtime model talks to the user through the machine's microphone and speakers and delegates work into the RPC session as ordinary turns, so delegated work runs with the session's model and any host tools registered through `set_host_tools`. At most one live session runs per RPC server.
+
+### Commands
+
+- `{ id?, type: "live_start", voice?: string, instructions?: string }` → `data: { voice: string }`
+- `{ id?, type: "live_stop" }`
+- `{ id?, type: "live_mute", muted?: boolean }` → `data: { muted: boolean }`
+
+`live_start` responds once the session is connected and recording, so it is dispatched concurrently like `bash`; `live_stop` sent meanwhile cancels the connection and the pending `live_start` then fails. `voice` defaults to the `live.voice` setting and the response reports the voice used. `instructions` replaces the bundled live prompt; it is rendered as a Handlebars template with `{{username}}` and `{{firstName}}` of the local OS account. Starting while a session is connecting, active, or closing fails.
+
+`live_stop` responds after the session has stopped and succeeds when none is active. `live_mute` sets the microphone mute, or toggles it when `muted` is omitted, and fails when no session is active.
+
+```json
+{ "id": "l1", "type": "live_start", "instructions": "You are Carly. Greet {{firstName}}." }
+{ "id": "l1", "type": "response", "command": "live_start", "success": true, "data": { "voice": "sol" } }
+```
+
+### Frames
+
+Live frames are not session events: `set_event_filter` never drops them.
+
+- `{ type: "live_phase", phase }` on every phase change; `phase` is one of `connecting`, `listening`, `working`, `speaking`, `muted`, `error`.
+- `{ type: "live_levels", input: number, output: number }` — microphone and speaker RMS in `[0, 1]`, at most one frame per 100 ms. Intermediate values are dropped; the latest values are always delivered.
+- `{ type: "live_transcript", role: "user" | "assistant", turn: number, text: string, final: boolean }` — the accumulated text of one turn; later frames for the same `role` and `turn` replace earlier ones until `final: true`.
+- `{ type: "live_end", error?: string }` — exactly once per session when it ends, carrying the failure when it ended on one (including a failed `live_start`).
+
+Closing stdin, or `pi.shutdown()`, stops an active live session before the process exits.
 
 ## Host tools and host URIs
 
@@ -584,7 +644,7 @@ A robust language-neutral client should follow these implementation steps:
   <Step>
     ### Non-blocking callback dispatch
 
-    Dispatch extension UI, host tool, and host URI requests without blocking the reader.
+Native input handlers run once, in submission order, before command, skill, or queue dispatch. Later input waits until the earlier submission is admitted, including an idle skill's vision description, and does not wait for its model turn. An `abort` cancels input received before it that is not yet admitted, even if that input is still in a hook. A successful `new_session`, `switch_session`, `branch`, `fork` or `open_session` does the same for input received before it; a vetoed one cancels nothing, and input sent after the session change runs in the new session. Dispatch extension UI, host tool, and host URI requests without blocking the reader.
   </Step>
   <Step>
     ### Preserve forward-compatible fields

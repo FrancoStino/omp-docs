@@ -102,6 +102,8 @@ remote → snapcompact → handoff → shake → soft
 
 That means another available method may run before handoff. If automatic handoff cannot run or fails, omp tries the next configured method. When the input has already overflowed the model's context, omp normally skips starting a new handoff request because the same oversized input could not be summarized; an already-prepared speculative handoff may still be applied.
 
+Threshold-triggered handoffs generate and commit the document inline rather than deferring to a post-prompt task; a post-turn handoff completes before the run's `agent_end` settles.
+
 Open `/settings` and use **Context → Compaction**, or add a global or project override to `config.yml`:
 
 ```yaml

@@ -188,7 +188,7 @@ Each key below `providers` becomes the provider portion of the selector.
 | `discovery` | Live catalog configuration: `type` plus optional positive `timeoutMs`. |
 | `modelOverrides` | Map from model id to sparse metadata patches. |
 | `compat` | Advanced request/response compatibility overrides; normally omit it and use omp's automatic detection. |
-| `disableStrictTools` | Disables strict tool-schema markers for endpoints, commonly Anthropic-compatible proxies, that reject them. |
+| `disableStrictTools` | Disables strict tool-schema markers for endpoints, commonly Anthropic-compatible proxies, that reject them. omp applies strict schemas by default to a small allowlist of high-frequency built-in tools (`python`, `edit`, `find`); `bash` is excluded because strict decoding fixes property order, so its later `timeout` field cannot follow an `async` field. |
 | `remoteCompaction` | Provider-wide remote compaction configuration. Model values merge on top. |
 | `guardrailIdentifier` | Amazon Bedrock guardrail id or ARN. |
 | `guardrailVersion` | Bedrock guardrail version; defaults to `DRAFT` when a guardrail is set. |

@@ -35,8 +35,8 @@ Accepted notes appear visibly in the session with one of three severities:
 
 | Severity | Meaning | What omp does |
 | --- | --- | --- |
-| `nit` | Cleanup, simplification, or a low-risk edge case. | Adds a non-interrupting aside at a safe boundary. |
-| `concern` | A material risk, missed constraint, or likely wrong direction. | Can steer work that is still running; a late note after a completed answer remains visible for the next turn. |
+| `nit` | Cleanup, simplification, or a low-risk edge case. | Adds a non-interrupting aside at the next turn boundary. |
+| `concern` | A material risk, missed constraint, or likely wrong direction. | Can steer work that is still running; after a completed answer, an `agent-end` reviewer can request a continuation while a `turn` reviewer leaves a visible note for the next turn. |
 | `blocker` | Continuing is likely to waste work or produce a broken result. | Can interrupt active work and can trigger follow-up even after a nominally completed answer. |
 
 Only a blocker may interrupt a partially completed review. Repeated or content-free notes are suppressed, and after an interrupt omp normally gives the main agent several turns before allowing another advisor interrupt. If you deliberately stop the agent, advisor notes stay visible instead of unexpectedly restarting it. In plan mode, notes are also shown for you to consider rather than steering the plan automatically.
@@ -119,6 +119,9 @@ advisors:
 | `enabled` | Per-advisor switch. Defaults to `true`; `false` leaves the entry visible as paused. |
 | `model` | Optional model selector and thinking level. When omitted, the entry uses `modelRoles.advisor`. |
 | `tools` | Optional built-in tools. Omitted gives `read`, `grep`, and `glob`; `[]` gives no investigative tools. |
+| `reviewMode` | Optional cadence. `turn` (default) reviews every primary turn, including `willContinue` tool-loop continuations; `agent-end` reviews only final yields. |
+| `reviewInterval` | Optional positive integer (default `1`). Review every Nth eligible update; skipped updates accumulate into the next scheduled review. Combine with `agent-end` to review every Nth completed run. |
+| `syncBacklog` | Optional `off`, `1`, `3`, `5`, or `strict`. Omitted inherits the global `advisor.syncBacklog`; an explicit `off` always disables waiting for this advisor. |
 | `instructions` | This advisor's specialization. It supports the same `@` imports as `WATCHDOG.md`. |
 
 Roster files use the same user, ancestor, current-directory, and `.omp/` discovery locations as `WATCHDOG.md`. All discovered files participate. Shared top-level instructions accumulate; when two entries normalize to the same name, the more specific project entry replaces the ancestor or user entry. Avoid defining the same name twice at the same directory level or keeping both `.yml` and `.yaml` variants there—the result is harder to reason about. Invalid YAML or an invalid schema is logged and that file is skipped rather than breaking the main session.
@@ -145,11 +148,25 @@ tier:
 
 | Setting | Default | Use it for |
 | --- | --- | --- |
-| `advisor.syncBacklog` | `off` | `off` never waits for review catch-up. `"1"`, `"3"`, or `"5"` pauses the main agent for up to 30 seconds when review falls that many turns behind; `"1"` is the closest to synchronous review. Quote numeric values in YAML because these are enum strings. |
-| `advisor.immuneTurns` | `3` | Number of main-agent turns after an interrupt during which further concerns and blockers become non-interrupting asides. Use `0` for maximum supervision, or a larger value to reduce churn. |
+| `advisor.syncBacklog` | `off` | Catch-up policy. `off` never waits; `"1"`, `"3"`, or `"5"` pause the main agent up to 30 seconds at that backlog threshold; `strict` waits for scheduled reviews without a wall-clock cap. Aborts, failures, quota pauses, session transitions, and disposal all release waits; a paused transition also rejects new waits. Quote numeric values in YAML because the thresholds are enum strings. |
+| `advisor.immuneTurns` | `3` | After a concern or blocker interrupts, route further concerns as non-interrupting asides for this many primary turns, including tool-loop continuations. Blockers remain exempt. |
+| `advisor.reviewMode` | `turn` | Default cadence when no `WATCHDOG.yml` roster exists: `turn` reviews every primary turn; `agent-end` reviews only final yields. Roster entries set their own (default `turn`). Applies live. |
+| `advisor.reviewInterval` | `1` | Default advisor only: review every Nth eligible update; skipped updates are sent with the next scheduled review. Applies live. |
 | `tier.advisor` | `none` | Service tier for advisor requests. `inherit` follows the main model's live provider-family tier; concrete tiers apply only where the provider supports them. |
 
-Even with catch-up enabled, advisor trouble does not permanently stall the main agent: catch-up waits are bounded and released on failure.
+Even with catch-up enabled, advisor trouble does not permanently stall the main agent: catch-up waits are bounded and released on failure, abort, quota pause, or session transition/disposal; `strict` waits without a wall-clock cap are released by the same events.
+
+A turn-mode advisor keeps the main agent tight; an `agent-end` reviewer with `syncBacklog: strict` provides synchronous final review:
+
+```yaml
+advisors:
+  - name: Turn reviewer
+    reviewMode: turn
+    syncBacklog: off
+  - name: Final reviewer
+    reviewMode: agent-end
+    syncBacklog: strict
+```
 
 ## One-off and headless runs
 
@@ -159,7 +176,7 @@ Enable review for one print-mode process without changing persistent settings:
 omp -p --advisor "Audit this migration plan and report the safest rollout."
 ```
 
-`--advisor` enables the configured default or roster for that process; it still needs resolvable advisor models and provider credentials. Print mode waits for final review before disposal so late notes are not silently lost, which can make the command finish later than an ordinary `-p` run. Use it selectively in automation and account for both the extra model cost and the longer completion time. See the [CLI reference](/reference/cli) for other launch flags.
+`--advisor` enables the configured default or roster for that process; it still needs resolvable advisor models and provider credentials. Print mode waits for final review before disposal so late notes are not silently lost, and sends updates the cadence skipped so an `agent-end` or interval reviewer still sees the final answer; an advisor on `strict` syncBacklog is waited on without the 30-second drain budget. This can make the command finish later than an ordinary `-p` run. See the [CLI reference](/reference/cli) for other launch flags.
 
 ## Privacy and safety
 

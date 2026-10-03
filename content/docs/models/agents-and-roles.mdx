@@ -96,11 +96,12 @@ The [Model roles](/models/roles) page covers automatic selection, project storag
 
 For an ordinary named worker, omp tries these sources in order:
 
-1. **Settings override** — `task.agentModelOverrides.<agent-name>`.
-2. **Agent default** — the agent's `model` frontmatter, which may contain one selector or an ordered list.
-3. **Normal fallback** — the parent session's active model, then its configured/default model fallback.
+1. **Call's model selector** — the call's own `model` selector (task item or flat call, or eval `agent(model=…)`).
+2. **Settings override** — `task.agentModelOverrides.<agent-name>`.
+3. **Agent default** — the agent's `model` frontmatter, which may contain one selector or an ordered list.
+4. **Normal fallback** — the parent session's active model, then its configured/default model fallback.
 
-A selector in either of the first two layers may be a concrete `provider/model` or a role alias such as `@slow`. Role aliases are expanded through `modelRoles` at launch.
+A selector in any of the first three layers may be a concrete `provider/model` or a role alias such as `@slow`. Role aliases are expanded through `modelRoles` at launch, except `@default` (equivalently `*`), which names step 4 itself: it resolves to the parent's active model rather than `modelRoles.default`, so a child asked for `@default` runs whatever its parent switched to. A per-call `model` is validated before dispatch: the ambiguous literals `default`/`inherit` are rejected in favor of an explicit `@default`, and a selector that expands to nothing or matches no available model fails the spawn naming the selector rather than silently falling through to a lower-precedence source.
 
 Use `task.agentModelOverrides` when you want to reroute an existing agent without copying or editing its definition. Prefer a role alias there when several agents or features should move together:
 

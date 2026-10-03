@@ -109,7 +109,7 @@ Configuration merges in this order: built-in defaults, global configuration, pro
 | `--smol <id>` | Override the fast/lightweight model role. |
 | `--slow <id>` | Override the thorough reasoning model role. |
 | `--plan <id>` | Override the planning model role. |
-| `--models <a,b,…>` | Restrict the models available to `Ctrl+P` cycling. Patterns may include effort, for example `sonnet:high`. |
+| `--models <a,b,…>` | Restrict the models available to `Ctrl+P` cycling, the startup model, and chat roles in `/model`. Patterns may include effort, for example `sonnet:high`. The scope restricts chat models only; judge, search, image, and speech models stay available for their roles, so entries naming them are accepted but have no effect. |
 | `--thinking <level>` | Set `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, or `auto`. |
 | `--service-tier <tier>` | Override the OpenAI-family tier: `none`, `auto`, `default`, `flex`, `scale`, or `priority`. `none` omits the request field. |
 | `--provider-session-id <id>` | Reuse a provider-side session ID. |
@@ -129,6 +129,7 @@ See [Providers](/models/providers) for model and credential resolution and [Role
 | `--prewalk-into <id>` | Choose the prewalk target; the default is the `smol` role. |
 | `--plan-yolo` | Start in read-only plan mode, auto-approve the first resolved plan, then execute it. |
 | `--plan-yolo-into <id>` | Choose the model that executes a plan-yolo plan; the default is `smol`. |
+| `--goal <objective>` | Start a fresh interactive session in goal mode and begin working on the objective, without typing `/goal`. Requires `goal.enabled`; interactive only. Bypasses `autoResume`, and is rejected with a positional prompt, `@file` or stdin input, `--resume`/`--continue`/`--fork`/imports, `--plan-yolo`, `--no-tools`, or startup plan mode (`plan.defaultOnStartup`). |
 
 See [Prewalk](/models/prewalk) and [Plan mode](/workflows/plan).
 
@@ -200,7 +201,7 @@ Every public subcommand accepts `--help`. Aliases are shown beside their canonic
 | `acp` | Run the ACP server over stdio. |
 | `agents` | `unpack` bundled task-agent definitions. |
 | `auth-broker` | `serve`, `token`, `login`, `logout`, `import`, `migrate`, `status`, `list`. |
-| `auth-gateway` | `serve`, `token`, `status`, `check`. |
+| `auth-gateway` | `serve` (HTTP forward proxy), `stdio` (JSON lines for a parent process), `token`, `status`, `check`. |
 | `bench` | Benchmark one or more models. |
 | `browser-relay` | `serve` the Chrome relay or `install` its extension. |
 | `cleanse` | Discover project diagnostics and fix them with file-disjoint workers. |

@@ -259,6 +259,8 @@ Connected servers may also publish prompts, resources, and notifications. `/mcp 
   <Accordion title="The connection times out">
     Set a larger per-server `timeout` in milliseconds, then reload. The default is 30 seconds; `0` disables client-side MCP timeouts. `OMP_MCP_TIMEOUT_MS` overrides every per-server timeout for the process.
 
+These request deadlines also govern subagent MCP calls over borrowed parent connections. The proxy adds no independent timeout; caller cancellation still stops the subagent's wait.
+
     ```json
     {
       "mcpServers": {

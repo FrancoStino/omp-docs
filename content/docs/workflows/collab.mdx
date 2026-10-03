@@ -131,6 +131,8 @@ Guests see that the session ended and terminal guests return to their previous l
 
 Transient network or relay interruptions reconnect automatically. omp displays a `reconnecting…` status and resynchronizes the shared session when the connection returns. If the room is gone, the host stopped, the key is invalid, or the relay rejects the connection permanently, the guest session ends instead; ask the host for a fresh link if they are still sharing.
 
+An auto-started room the relay never opens — the relay is unreachable, or the connection times out — is retried; because no guest or registry reader ever saw it, the retry reuses that room's generation, and a session that recovers still publishes generation 1 first.
+
 ## Permissions and security
 
 Collab links are bearer secrets: **anyone who has a link receives that link's permissions**.

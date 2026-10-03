@@ -99,6 +99,7 @@ The handler receives `(event, ctx)`. `event` is the typed payload in the tables 
 | `ctx.hasUI`, `ctx.ui` | Whether interactive UI is available, plus notifications, prompts, status, widgets, and other UI methods. Guard interactive calls with `hasUI` or `mode === "tui"`. |
 | `ctx.model`, `ctx.models` | Current model and the read-only model query surface. |
 | `ctx.sessionManager` | Read-only session access. Use `pi.sendMessage()` or `pi.appendEntry()` for supported writes. |
+| `ctx.agent` | `{ kind: "main" \| "sub", id, name, depth, parentId? }`. Check `ctx.agent.kind === "sub"` or the agent `name` to act only in subagents; use `kind`, not `depth`. Advisor tool calls report `{ kind: "sub", id: "advisor", name: "advisor", depth: 0, parentId }`, so `kind === "main"` also excludes advisor activity. |
 | `ctx.isIdle()`, `ctx.hasPendingMessages()`, `ctx.abort()` | Current run state and cancellation control. |
 | `ctx.getContextUsage()`, `ctx.getSystemPrompt()` | Current context usage and effective system-prompt lines. |
 | `ctx.setTimeout()`, `ctx.setInterval()`, `ctx.clearTimer()` | Session-owned timers whose errors are contained and which are cleared at shutdown. |
@@ -156,6 +157,8 @@ Returns from these events are ignored. The payload is still typed, so a hook can
 | `message_start` | `message`; a user, assistant, or tool-result message started. |
 | `message_update` | current `message`, `assistantMessageEvent`; streaming assistant updates. This can be high-volume. |
 | `message_end` | detached `message` snapshot; notification only. Mutating it does not rewrite model or session context. |
+
+`session_before_branch` and `session_branch` carry `reason`, which decides what `session_before_branch.entryId` means. For `"branch"` (`branch(entryId)`, `/branch`) it is the user message being rewound: it and everything after it are dropped. For `"fork"` (`AgentSession.fork(entryId)`, RPC `fork` with an `entryId`) and `"btw"` (`/btw` promotion) it is the last entry kept in the new session.
 
 ### Tool execution and approvals
 
