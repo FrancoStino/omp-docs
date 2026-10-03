@@ -134,6 +134,9 @@ jobs:
         if: steps.diff.outputs.empty == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        permissions:
+          contents: write
+          pull-requests: write
         run: |
           TO="${{ steps.range.outputs.to }}"
           SHORT="$(echo "$TO" | cut -c1-7)"
@@ -148,5 +151,5 @@ jobs:
           if [ -n "$EXISTING" ]; then
             gh pr edit "$EXISTING" --body "$BODY"
           else
-            gh pr create --base main --head "$BRANCH" --title "docs: sync upstream $SHORT" --body "$BODY" --label docs/drift || gh pr create --base main --head "$BRANCH" --title "docs: sync upstream $SHORT" --body "$BODY"
+            gh pr create --base main --head "$BRANCH" --title "docs: sync upstream $SHORT" --body "$BODY"
           fi
