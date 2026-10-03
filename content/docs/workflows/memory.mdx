@@ -5,7 +5,7 @@ description: "Carry durable preferences, decisions, and project knowledge into l
 
 Memory helps omp continue work without making you restate durable facts such as repository conventions, architectural decisions, and review preferences. It is separate from [compaction](/workflows/compaction): compaction shortens one session, while memory can affect future sessions.
 
-Memory is **off by default**. If you want it, open `/settings`, select the **Memory** tab, and choose one backend. Start with `mnemopi` for searchable memory stored on this machine, `local` for automatic project summaries, or `hindsight` when you already operate a Hindsight service.
+Memory is **off by default**. If you want it, open `/settings`, select the **Memory** tab, and choose one backend. Start with `mnemopi` for searchable memory stored on this machine, `local` for automatic project summaries, `hindsight` when you already operate a Hindsight service, or `sharpshooter` when you want project decisions (architecture, product, style) captured automatically with almost no prompting.
 
 ## Choose a backend
 
@@ -15,6 +15,7 @@ Memory is **off by default**. If you want it, open `/settings`, select the **Mem
 | `local` | You want omp to periodically distill past persisted sessions into project guidance. | Generated files on this machine, isolated by working directory. | It is a batch summary pipeline, not a searchable store. You cannot review or forget one structured fact. |
 | `mnemopi` | You want prompt-driven remember, recall, and forget behavior without a memory server. | Local SQLite databases; `per-project` by default. | The database is local, but the default `smol` LLM mode can send extraction work to your configured model provider. |
 | `hindsight` | You want a remote bank, shared infrastructure, or Hindsight's synthesis and mental models. | Your Hindsight server; `per-project-tagged` by default. | Automatic retention is on by default, so conversation text leaves the machine. |
+| `sharpshooter` | You want durable project decisions captured without writing them down: architecture, product and style choices emerge from friction in normal prompts. | Markdown files on this machine (`architecture.md`, `product.md`, `style.md` per project). | Only friction-gated decisions persist; ordinary facts and task state do not. |
 
 The smallest persistent setup from a shell is:
 
@@ -23,6 +24,7 @@ The smallest persistent setup from a shell is:
 omp config set memory.backend local
 omp config set memory.backend mnemopi
 omp config set memory.backend hindsight
+omp config set memory.backend sharpshooter
 
 # Confirm the effective setting
 omp config get memory.backend
@@ -281,6 +283,35 @@ omp
 | `hindsight.retainTimeoutMs` | `60000` | Retention deadline. |
 | `hindsight.reflectTimeoutMs` | `120000` | Synthesis deadline. |
 | `hindsight.debug` | `false` | Enable request and backend debug logging. |
+
+## Configure Sharpshooter
+
+Sharpshooter is the friction-gated project-decision memory backend: per-prompt async extraction emits decision deltas into a per-session queue, and a shared consolidation pass (default every 5 minutes) applies queued deltas per project into three markdown decision files. Only decisions that show friction persist — a regression, repeated corrections, or a rule that is subtle to get right from the code alone. Ordinary facts and task state do not persist here.
+
+```yaml
+memory:
+  backend: sharpshooter
+```
+
+### What gets stored
+
+| File | Holds |
+| --- | --- |
+| `architecture.md` | Architecture decisions |
+| `product.md` | Product decisions |
+| `style.md` | Style decisions and constraints |
+
+Each file has a 120-line ceiling enforced at consolidation. Banks live under `<agentDir>/memories/sharpshooter/<project>/` with `queue/<sessionId>/` deltas and a `state.json` for consolidation bookkeeping. Use `/memory stats` and `/memory diagnose` output for the last consolidation result and error.
+
+### Settings
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `sharpshooter.model` | Unset (uses the `smol` role) | Model selector for extraction and consolidation. |
+| `sharpshooter.intervalMinutes` | `5` | Consolidation interval. |
+| `sharpshooter.injectionTokenLimit` | `15000` | Approximate memory context budget. |
+
+Decision categories a delta may claim are `architecture_decision`, `product_decision`, `style_decision`, `constraint`, `rejected_approach` and `correction`. Each delta carries the exact triggering user-prompt substring as evidence.
 
 ## Troubleshooting
 

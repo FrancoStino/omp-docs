@@ -96,7 +96,18 @@ jobs:
           AI_MODEL: ${{ vars.AI_MODEL }}
           SYNC_FROM: ${{ steps.range.outputs.last }}
           SYNC_TO: ${{ steps.range.outputs.to }}
-        run: bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}"
+        run: |
+          bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}"
+          echo "## ai-report" >> "$GITHUB_STEP_SUMMARY"
+          cat ai-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload AI report
+        if: steps.diff.outputs.empty == 'false' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-report
+          path: ai-report.md
+          if-no-files-found: warn
 
       - name: Build check
         if: steps.diff.outputs.empty == 'false'

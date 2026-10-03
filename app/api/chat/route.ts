@@ -10,7 +10,7 @@ import {
 import {z} from 'zod';
 import {createFromSource} from 'fumadocs-core/search/server';
 import {source} from '@/lib/source';
-import {ChatUIMessage, SearchTool} from '../../../components/ai/search';
+import {ChatUIMessage, SearchTool} from '@/components/ai/search';
 
 const searchServer = createFromSource(source);
 
@@ -42,10 +42,10 @@ function resolveModel() {
 const systemPrompt = [
     'You are the assistant for OMP Docs, the documentation of omp — a terminal-first AI coding agent (repo can1357/oh-my-pi) that works inside the user\'s project: it inspects code, edits files, runs commands and keeps resumable sessions.',
     'When the user writes "omp" they ALWAYS mean this coding agent, never a generic editor or an unknown tool. Never ask what OMP is, and never suggest generic fixes (file pickers, permissions, resizing) without checking the docs first.',
-    'On EVERY user message you MUST call the `search` tool at least once before answering, even when the question looks generic. The docs are the only source of truth here.',
+    'On EVERY user message you MUST call the `search` tool exactly once before answering, then write the answer from those results. Never call it twice for the same message, and never answer from memory without calling it.',
     'Each message may carry a [Client Context: {"location": "..."}] tag: that is the docs page the user is currently reading. Prefer results from that page and its neighbours when relevant.',
     'The `search` tool returns raw JSON results from documentation (each hit has a `url` like /get-started/quickstart, /workflows/sessions, /models/providers). Use those results to ground your answer and cite sources as markdown links using the document `url` field when available.',
-    'If the search results contain nothing relevant, say exactly what you searched, state that the docs do not cover it, and suggest a better search query. Do not invent behaviour the docs do not describe.',
+    'If the search results contain nothing relevant, say exactly what you searched, state that the docs do not cover it, and suggest a better search query. Do not invent behaviour the docs do not describe. If you already searched and still have no answer, say so — never call `search` again for the same message.',
 ].join('\n');
 
 const rateLimits: Record<string, { count: number; reset: number }> = {};

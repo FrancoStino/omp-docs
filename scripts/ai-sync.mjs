@@ -23,9 +23,14 @@ const BASE = process.env.AI_BASE_URL?.replace(/\/$/, '');
 const KEY = process.env.AI_API_KEY;
 const MODEL = process.env.AI_MODEL;
 
-if (!BASE || !KEY || !MODEL) {
-	await writeFile(reportFile, 'AI sync skipped: AI_BASE_URL / AI_API_KEY / AI_MODEL not set in CI.\n');
-	console.log('AI sync skipped: missing env');
+const MODEL_PLACEHOLDERS = new Set(['openrouter/free', 'free', 'openrouter', 'model', 'your-model']);
+
+if (!BASE || !KEY || !MODEL || MODEL_PLACEHOLDERS.has((MODEL ?? '').trim())) {
+	await writeFile(
+		reportFile,
+		`AI sync skipped: set a real model id in AI_MODEL (got "${MODEL ?? '(unset)'}"). "openrouter/free" is not a model — use e.g. meta-llama/llama-3.1-8b-instruct:free.\n`,
+	);
+	console.log('AI sync skipped: missing or placeholder env (AI_MODEL must be a concrete id, not "openrouter/free")');
 	process.exit(0);
 }
 
@@ -100,6 +105,7 @@ async function reflectedPages(symbols, except) {
 }
 
 async function askModel({pagePath, pageBody, diff, evidence}) {
+	const started = Date.now();
 	const evidenceBlock = evidence.length > 0
 		? evidence.map((e) => `--- ${e.page} (mentions ${e.symbols.join(', ')})\n${e.excerpt}`).join('\n\n')
 		: '(none)';
@@ -121,7 +127,12 @@ async function askModel({pagePath, pageBody, diff, evidence}) {
 
 	if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
 	const json = await res.json();
-	return json.choices?.[0]?.message?.content?.trim() ?? '';
+	const content = json.choices?.[0]?.message?.content?.trim() ?? '';
+	if (!content) {
+		const reason = json.choices?.[0]?.finish_reason ?? 'unknown';
+		throw new Error(`empty completion (finish_reason=${reason}, ${Date.now() - started}ms)`);
+	}
+	return content;
 }
 
 /** Reject anything that lost the frontmatter, the footer, looks truncated,

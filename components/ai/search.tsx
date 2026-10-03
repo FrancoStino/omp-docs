@@ -603,7 +603,14 @@ function Message({message, ...props}: { message: ChatUIMessage } & ComponentProp
                 {roleName[message.role] ?? 'unknown'}
             </p>
             <div className="prose text-sm">
-                <Markdown text={markdown}/>
+                {markdown.trim().length > 0 ? (
+                    <Markdown text={markdown}/>
+                ) : (
+                    <p className="text-fd-muted-foreground">
+                        The search ran but the model returned no answer. Press Retry below — or rephrase the
+                        question with different keywords.
+                    </p>
+                )}
             </div>
 
             {attachments.length > 0 && (
