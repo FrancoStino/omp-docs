@@ -136,6 +136,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TO="${{ steps.range.outputs.to }}"
+          LAST="${{ steps.range.outputs.last }}"
           SHORT="$(echo "$TO" | cut -c1-7)"
           BRANCH="docs/sync-$SHORT"
           git checkout -B "$BRANCH"
@@ -143,7 +144,27 @@ jobs:
           git add content/docs
           git -c user.name="docs-sync" -c user.email="docs-sync@users.noreply.github.com" commit -m "docs: sync upstream $SHORT" || true
           git push -u origin "$BRANCH" --force-with-lease
-          BODY="$(cat sync-body.md)"
+          N_FILES="$(wc -l < changed.txt | tr -d ' ')"
+          N_COMMITS="$(wc -l < commits.txt | tr -d ' ')"
+          BODY_FILE="$(mktemp)"
+          {
+            echo "Upstream diff $LAST -> $TO ($N_COMMITS commits, $N_FILES files)"
+            echo
+            echo "Full diff, commits, changelog and AI report are in the run artifacts"
+            echo "(\`sync-evidence\`, \`ai-report\`) — the body below is a summary."
+            echo
+            echo "## changed files"
+            head -50 changed.txt
+            [ "$(wc -l < changed.txt)" -gt 50 ] && echo "…and $(( $(wc -l < changed.txt) - 50 )) more (see artifact)"
+            echo
+            echo "## AI rewrite"
+            head -c 20000 ai-report.md
+          } > "$BODY_FILE"
+          if [ "$(wc -c < "$BODY_FILE")" -ge 60000 ]; then
+            head -c 60000 "$BODY_FILE" > "$BODY_FILE.cut"
+            mv "$BODY_FILE.cut" "$BODY_FILE"
+          fi
+          BODY="$(cat "$BODY_FILE")"
           EXISTING="$(gh pr list --head "$BRANCH" --json number -q '.[0].number')"
           if [ -n "$EXISTING" ]; then
             gh pr edit "$EXISTING" --body "$BODY"
