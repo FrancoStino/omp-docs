@@ -134,6 +134,7 @@ jobs:
           # Auth via env: omp resolves OPENROUTER_API_KEY natively for its
           # built-in openrouter provider. No config.yml needed.
           export OPENROUTER_API_KEY="$AI_API_KEY"
+          mkdir -p /tmp/omp-home
           # Prompt from the evidence the previous steps already produced.
           # Simplified on purpose: rewrite directly from diff+page (no
           # EVIDENCE block in the same call — that is what truncated
