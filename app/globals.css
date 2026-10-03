@@ -7,90 +7,57 @@
    are runtime variables injected by next/font, so inlining them at build
    time fails with "Cannot resolve custom property". */
 :root {
-  --pi-pink: oklch(0.7 0.24 340);
-  --pi-violet: oklch(0.62 0.21 295);
-  --pi-cyan: oklch(0.81 0.14 200);
-  --pi-gradient: linear-gradient(135deg, var(--pi-pink), var(--pi-violet) 50%, var(--pi-cyan));
-  letter-spacing: -0.25px;
+    --pi-pink: oklch(0.7 0.24 340);
+    --pi-violet: oklch(0.62 0.21 295);
+    --pi-cyan: oklch(0.81 0.14 200);
+    --pi-gradient: linear-gradient(135deg, var(--pi-pink), var(--pi-violet) 50%, var(--pi-cyan));
+    letter-spacing: -0.25px;
 }
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Pi brand primary: plain CSS after imports so it beats the theme preset.
    Light: violet — Dark: the same violet, brightened for the dark surface.
    Cyan is reserved for the logo gradient only. */
 :root {
-  --color-fd-primary: oklch(0.55 0.22 295);
+    --color-fd-primary: oklch(0.55 0.22 295);
 }
 
 .dark {
-  --color-fd-primary: oklch(0.72 0.19 300);
-  --color-fd-background: #09090b;
-  --color-fd-ring: var(--color-fd-primary);
-}
-
-/* Solar-style article surface on the neutral base: raised card around the
-   article, borderless sidebar. Selectors copied from fumadocs-ui/css/solar.css
-   (#nd-docs-layout [data-layout-main]::before, #nd-sidebar). */
-@media (min-width: 768px) {
-  #nd-docs-layout [data-layout-main] {
-    position: relative;
-    padding: 1rem;
-  }
-
-  #nd-docs-layout [data-layout-main]::before {
-    content: '';
-    position: absolute;
-    inset: 1rem;
-    background: var(--color-fd-card);
-    border: 1px solid var(--color-fd-border);
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
-    z-index: -1;
-  }
-}
-
-#nd-sidebar[data-collapsed='false'] {
-  border: none;
-}
-
-/* The Pi gradient is the accent system. --color-fd-primary stays as the token
-   (icons, ring, any place a flat colour is needed); everywhere the accent is
-   painted as text or a surface it uses the logo ramp instead. */
-.bg-fd-primary {
-  background-image: var(--pi-gradient);
-  color: oklch(0.16 0.03 295);
+    --color-fd-primary: oklch(0.72 0.19 300);
+    --color-fd-background: #09090b;
+    --color-fd-ring: var(--color-fd-primary);
 }
 
 /* Sidebar follows the theme (light in light mode, dark only in dark mode).
    The Fumadocs convention is tokens (--color-fd-*) only, no hardcoded colours. */
 #nd-sidebar {
-  background-color: var(--color-fd-sidebar);
-  color: var(--color-fd-sidebar-foreground);
+    background-color: var(--color-fd-sidebar);
+    color: var(--color-fd-sidebar-foreground);
 }
 
 .dark #nd-sidebar {
-  --color-fd-sidebar: #0b0b0e;
-  --color-fd-sidebar-foreground: #ececf1;
-  --color-fd-sidebar-border: #1c1c22;
+    --color-fd-sidebar: #0b0b0e;
+    --color-fd-sidebar-foreground: #ececf1;
+    --color-fd-sidebar-border: #1c1c22;
 }
 
 #nd-sidebar a,
 #nd-sidebar button,
 #nd-sidebar span {
-  color: inherit;
+    color: inherit;
 }
 
 /* Active link: gradient painted onto the text */
 [data-sidebar] a[data-active='true'] {
-  background-image: var(--pi-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+    background-image: var(--pi-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
 }
 
 /* ------------------------------------------------------------------
@@ -101,17 +68,17 @@ button[class*='inline-flex'],
 input[type='text'],
 input[type='search'],
 [data-search-anchor] button {
-  min-height: 2.25rem;
+    min-height: 2.25rem;
 }
 
 button[aria-label='Ask AI'],
 button[data-search-trigger] {
-  height: 2.25rem;
+    height: 2.25rem;
 }
 
 /* The chat composer input matches the button row above it */
 [data-sidebar] input {
-  min-height: 2.25rem;
+    min-height: 2.25rem;
 }
 
 /* Code blocks: leave Shiki's dual-theme backgrounds alone. The theme
@@ -124,22 +91,30 @@ button[data-search-trigger] {
    ------------------------------------------------------------------ */
 #nd-docs-layout h2,
 article h2 {
-  border-left: 3px solid transparent;
-  border-image: var(--pi-gradient) 1;
-  padding-left: 0.75rem;
+    border-left: 3px solid transparent;
+    border-image: var(--pi-gradient) 1;
+    padding-left: 0.75rem;
 }
 
-#nd-docs-layout h3,
-article h3 {
-  border-left: 2px solid var(--color-fd-primary);
-  padding-left: 0.625rem;
+/* Article-level h3 only: the same selector also matched the h3 inside
+   every Card (which carries its own left bar in the markup), stacking
+   two bars and the extra offset seen in the screenshots. */
+#nd-docs-layout article > h3,
+#nd-docs-layout [data-steps] h3,
+article > h3 {
+    border-left: 2px solid var(--color-fd-primary);
+    padding-left: 0.625rem;
 }
 
-/* Steps headings already carry a number badge; drop the extra bar there */
+/* Steps headings already carry a number badge; Card titles have their own
+   left border in the markup — drop the article bar in both places. */
 #nd-docs-layout li > h3,
-article li > h3 {
-  border-left: none;
-  padding-left: 0;
+article li > h3,
+#nd-docs-layout [data-card] > h3,
+article [data-card] > h3 {
+    border-left: none;
+    border-image: none;
+    padding-left: 0;
 }
 
 /* Inline code: keep the theme surface. A fixed dark background is what
@@ -149,21 +124,21 @@ article li > h3 {
    <pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line">…,
    so both the min-width and the nowrap have to be undone for wrapping to apply. */
 figure pre {
-  min-width: 0 !important;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 figure pre code {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 figure pre code > .line {
-  display: block;
-  min-width: 0;
+    display: block;
+    min-width: 0;
 }
 
 /* ------------------------------------------------------------------
@@ -173,68 +148,73 @@ figure pre code > .line {
    ------------------------------------------------------------------ */
 #nd-docs-layout [class*='fd-steps'] > * + *,
 article [data-steps] > * + * {
-  margin-top: 1.75rem;
+    margin-top: 1.75rem;
 }
 
 #nd-docs-layout h2 + [class*='fd-steps'],
 #nd-docs-layout h3 + [class*='fd-steps'] {
-  margin-top: 1.25rem;
+    margin-top: 1.25rem;
 }
 
 #nd-docs-layout [class*='fd-steps'] + * {
-  margin-top: 2.5rem;
+    margin-top: 2.5rem;
 }
 
-/* Cards: uniform height per row. Fumadocs' Cards grid does not stretch
-   items, so a card with title+description looks taller than a
-   title-only neighbour. Convention: only layout, no colours. */
-#nd-docs-layout [data-card],
-article [data-card] {
-  height: 100%;
-}
-
-/* Cards get a real gap and margin from the block above them */
+/* Cards: uniform height per row. Fumadocs' Cards grid is `grid grid-cols-2`
+   without stretch, and each Card also gets the h2/h3 title bar from above,
+   so a taller neighbour leaves its sibling floating mid-row. The bar is the
+   ::before on the card's own h3 — excluded below, it must not paint. */
 #nd-docs-layout [class*='fd-cards'],
 article > [class*='fd-cards'] {
-  gap: 1rem;
-  margin-block: 2rem;
+    gap: 1rem;
+    margin-block: 2rem;
+    align-items: stretch;
 }
 
-#nd-docs-layout [class*='fd-card'] + *,
-#nd-docs-layout [class*='fd-cards'] + * {
-  margin-top: 2rem;
+#nd-docs-layout [data-card],
+article [data-card] {
+    height: 100%;
+    margin-top: 0;
 }
 
 #nd-docs-layout [class*='fd-accordion'],
 #nd-docs-layout [class*='fd-accordions'] {
-  margin-block: 1.5rem;
+    margin-block: 1.5rem;
 }
 
 #nd-docs-layout [class*='fd-callout'],
 #nd-docs-layout [data-callout] {
-  margin-block: 1.5rem;
+    margin-block: 1.5rem;
 }
 
 #nd-docs-layout table {
-  margin-block: 1.5rem;
+    margin-block: 1.5rem;
 }
 
-/* Step headings need air above them inside the step body */
-#nd-docs-layout [class*='fd-steps'] h3 {
-  margin-top: 0;
+
+/* Callout icon row: the icon is a flex item next to the text column,
+   not above it. This only fixes vertical alignment; colours and
+   structure stay Fumadocs'. */
+#nd-docs-layout [class*='fd-callout'] {
+    align-items: flex-start;
+}
+
+#nd-docs-layout [class*='fd-callout'] > svg {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
 }
 
 /* Sidebar header row (the <div class="flex"> with the logo title): the
    collapse button has mb-auto, which pulls it off-centre. This is
    Fumadocs' own sidebar/header.js markup, so target by structure. */
 #nd-sidebar > div.flex:has(> a[href='/']) {
-  align-items: center;
+    align-items: center;
 }
 
 #nd-sidebar > div.flex:has(> a[href='/']) > button[class*='mb-auto'] {
-  margin-top: 0;
-  margin-bottom: 0;
-  align-self: center;
+    margin-top: 0;
+    margin-bottom: 0;
+    align-self: center;
 }
 
 /* Sidebar header row is already centred by the rules above; no nav override needed. */
@@ -242,18 +222,18 @@ article > [class*='fd-cards'] {
 /* Search hits: keep the readable highlight, no gradient fill that swallows
    the snippet text on a dark popover. */
 mark {
-  background-color: color-mix(in oklab, var(--color-fd-primary) 28%, transparent);
-  color: inherit;
-  border-radius: 3px;
-  padding-inline: 2px;
+    background-color: color-mix(in oklab, var(--color-fd-primary) 28%, transparent);
+    color: inherit;
+    border-radius: 3px;
+    padding-inline: 2px;
 }
 
 /* Result rows use the popover tokens, never the code rules above. */
 [data-search-dialog] code {
-  background-color: var(--color-fd-secondary);
-  border: none;
-  padding-inline: 0.25rem;
-  padding-block: 0;
-  border-radius: 4px;
-  color: inherit;
+    background-color: var(--color-fd-secondary);
+    border: none;
+    padding-inline: 0.25rem;
+    padding-block: 0;
+    border-radius: 4px;
+    color: inherit;
 }

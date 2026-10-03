@@ -344,8 +344,6 @@ These are shell commands. Their arguments are ordinary CLI syntax; they are not 
 
 ## Practical examples
 
-<Callout type="info">
-
 ```sh
 # Start in another directory with an additional workspace root
 omp --cwd apps/web --add-dir packages/ui "Fix the broken component test"
@@ -376,10 +374,10 @@ omp gc --json
 omp worktree clear --dry-run
 ```
 
+<Callout type="info">
 If a command rejects an action or flag, run `omp <command> --help` from the installed version. That output is generated from the same current command registry used for dispatch and completion.
+</Callout>
 
 ---
 
 Source: [omp.sh](https://omp.sh/docs/cli) — MIT, Stencil Labs. Initially imported on 2026-10-03; updates via automatic sync.
-
-</Callout>

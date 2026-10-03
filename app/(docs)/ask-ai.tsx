@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {SparklesIcon} from 'lucide-react';
+import {MessageCircleIcon} from 'lucide-react';
 import {AISearch, AISearchPanel, AISearchTrigger} from '@/components/ai/search';
 import {buttonVariants} from '@/components/ui/button';
 import {cn} from 'cn';
@@ -34,15 +34,16 @@ export function AskAi() {
             <AISearchPanel/>
             <AISearchTrigger
                 aria-label="Ask AI"
+                position="float"
                 className={cn(
-                    buttonVariants({variant: 'secondary', size: 'icon'}),
-                    'fixed right-5 bottom-5 z-40 size-12 rounded-full shadow-lg',
-                    // The rail occupies that corner while open; the panel has
-                    // its own close button, so fade the launcher out.
-                    'data-[state=open]:pointer-events-none data-[state=open]:opacity-0',
+                    buttonVariants({
+                        variant: 'secondary',
+                        className: 'text-fd-muted-foreground rounded-2xl',
+                    }),
                 )}
             >
-                <SparklesIcon className="size-5"/>
+                <MessageCircleIcon className="size-4.5"/>
+                Ask AI
             </AISearchTrigger>
         </AISearch>
     );

@@ -12,7 +12,7 @@ import {
     useState,
 } from 'react';
 import {flushSync} from 'react-dom';
-import {Loader2, MessageCircleIcon, Paperclip, Plus, RefreshCw, SearchIcon, Send, X} from 'lucide-react';
+import {BotIcon, HistoryIcon, Loader2, Paperclip, Plus, RefreshCw, SearchIcon, Send, X} from 'lucide-react';
 import {cn} from 'cn';
 import {buttonVariants} from '../ui/button';
 import {useChat, type UseChatHelpers} from '@ai-sdk/react';
@@ -88,11 +88,12 @@ function readSession(id: string): ChatUIMessage[] {
 }
 
 /** Persist messages after every chat update, and keep the index title in sync
- with the first user message. Skips until `ready` so the mount-time
- empty message list never wipes stored history. */
-function usePersistSession(id: string, messages: ChatUIMessage[], ready: boolean) {
+ with the first user message. Skips empty lists so the mount-time
+ initial [] never wipes stored history — no ready flag needed, and no
+ setState-in-effect anywhere. */
+function usePersistSession(id: string, messages: ChatUIMessage[]) {
     useEffect(() => {
-        if (!ready) return;
+        if (messages.length === 0) return;
         try {
             localStorage.setItem(StoragePrefix + id, JSON.stringify(messages));
             const index = readIndex();
@@ -106,7 +107,7 @@ function usePersistSession(id: string, messages: ChatUIMessage[], ready: boolean
         } catch {
             // private mode / quota: chat still works, it just won't persist
         }
-    }, [id, messages, ready]);
+    }, [id, messages]);
 }
 
 function titleOf(messages: ChatUIMessage[]): string {
@@ -181,7 +182,7 @@ export function AISearchPanelHeader({className, ...props}: ComponentProps<'div'>
                             'text-fd-muted-foreground shrink-0',
                         )}
                     >
-                        <MessageCircleIcon/>
+                        <HistoryIcon/>
                     </button>
                     <button
                         type="button"
@@ -253,43 +254,27 @@ export function AISearchPanelHeader({className, ...props}: ComponentProps<'div'>
 }
 
 export function AISearchInputActions() {
-    const {messages, status, setMessages, regenerate} = useChatContext();
+    const {messages, status, regenerate} = useChatContext();
     const isLoading = status === 'streaming';
 
     if (messages.length === 0) return null;
+    if (isLoading || messages.at(-1)?.role !== 'assistant') return null;
 
     return (
-        <>
-            {!isLoading && messages.at(-1)?.role === 'assistant' && (
-                <button
-                    type="button"
-                    className={cn(
-                        buttonVariants({
-                            variant: 'secondary',
-                            size: 'sm',
-                            className: 'rounded-full gap-1.5',
-                        }),
-                    )}
-                    onClick={() => regenerate()}
-                >
-                    <RefreshCw className="size-4"/>
-                    Retry
-                </button>
+        <button
+            type="button"
+            className={cn(
+                buttonVariants({
+                    variant: 'secondary',
+                    size: 'sm',
+                    className: 'rounded-full gap-1.5',
+                }),
             )}
-            <button
-                type="button"
-                className={cn(
-                    buttonVariants({
-                        variant: 'secondary',
-                        size: 'sm',
-                        className: 'rounded-full',
-                    }),
-                )}
-                onClick={() => setMessages([])}
-            >
-                Clear Chat
-            </button>
-        </>
+            onClick={() => regenerate()}
+        >
+            <RefreshCw className="size-4"/>
+            Retry
+        </button>
     );
 }
 
@@ -655,9 +640,10 @@ export function AISearch({children}: { children: ReactNode }) {
     const [open, setOpen] = useState(false);
     const [sessionId, setSessionId] = useState(() => currentSessionId());
 
-    // One Inner (and one useChat instance) per session id: remounting on
-    // change keeps the message list aligned with the selected session
-    // instead of leaking messages from the previous one.
+    // One Inner (and one useChat instance) per session id. There is no
+    // enter/exit animation on switch: Inner mounts synchronously with the
+    // stored messages already in place (see the initial-messages comment
+    // below), so no fade is needed and none is wanted.
     return (
         <SessionContext value={useMemo(() => ({open, setOpen, sessionId, setSessionId}), [open, sessionId])}>
             <Inner key={sessionId} sessionId={sessionId}>
@@ -667,42 +653,49 @@ export function AISearch({children}: { children: ReactNode }) {
     );
 }
 
-/** Owns the useChat instance for exactly one session. */
+/** Owns the useChat instance for exactly one session. Stored messages are
+ seeded during the first render (setMessages before paint, guarded by
+ the `seeded` flag so StrictMode double-render cannot double-apply).
+ The persist effect skips empty lists, so the mount-time [] never wipes
+ history — and there is no fade, flash or placeholder on switch: the
+ thread is already there. */
 function Inner({children, sessionId}: { children: ReactNode; sessionId: string }) {
+    const [initial] = useState(() => readSession(sessionId));
+    const [seeded, setSeeded] = useState(false);
     const chat = useChat<ChatUIMessage>({
         id: sessionId,
         transport: new DefaultChatTransport({
             api: '/api/chat',
         }),
     });
-    // Restore once per mount directly during render via lazy state: useChat
-    // starts empty, so seed the message store before the first paint. The
-    // persist effect below waits for `hydrated` so it never overwrites
-    // stored history with the initial [].
-    const [hydrated, setHydrated] = useState(false);
-    const hydratedRef = useRef(false);
 
-    useEffect(() => {
-        if (!hydratedRef.current) {
-            hydratedRef.current = true;
-            chat.setMessages(readSession(sessionId));
-            queueMicrotask(() => setHydrated(true));
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    if (!seeded) {
+        setSeeded(true);
+        if (initial.length > 0) chat.setMessages(initial);
+    }
 
-    usePersistSession(sessionId, chat.messages, hydrated);
+    usePersistSession(sessionId, chat.messages);
 
     return <ChatContext value={useMemo(() => ({chat}), [chat])}>{children}</ChatContext>;
 }
 
-export function AISearchTrigger({className, ...props}: ComponentProps<'button'>) {
+export function AISearchTrigger({
+                                    position = 'default',
+                                    className,
+                                    ...props
+                                }: ComponentProps<'button'> & { position?: 'default' | 'float' }) {
     const {open, setOpen} = useAISearchContext();
 
     return (
         <button
             data-state={open ? 'open' : 'closed'}
-            className={cn(className)}
+            className={cn(
+                position === 'float' && [
+                    'fixed bottom-4 gap-3 w-24 inset-e-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] shadow-lg z-20 transition-[translate,opacity]',
+                    open && 'translate-y-10 opacity-0',
+                ],
+                className,
+            )}
             onClick={() => setOpen(!open)}
             {...props}
         >
@@ -778,7 +771,7 @@ export function AISearchPanelList({className, style, ...props}: ComponentProps<'
             {messages.length === 0 ? (
                 <div
                     className="text-sm text-fd-muted-foreground/80 size-full flex flex-col items-center justify-center text-center gap-2">
-                    <MessageCircleIcon fill="currentColor" stroke="none"/>
+                    <BotIcon className="size-8 text-fd-primary"/>
                     <p onClick={(e) => e.stopPropagation()}>Start a new chat below.</p>
                 </div>
             ) : (

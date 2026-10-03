@@ -270,10 +270,12 @@ Calling `prompt()` while the session is already streaming requires `streamingBeh
 
 <Tabs items={['SDK (In-process)', 'RPC (Process boundary)']}>
   <Tab value="SDK (In-process)">
+
     - **Best fit:** Bun/TypeScript host, direct callbacks for tools, direct session state, lowest integration overhead.
     - **Trade-off:** omp shares your process, runtime, memory, and failure boundary.
   </Tab>
   <Tab value="RPC (Process boundary)">
+
     - **Best fit:** Any language, child-process or service isolation, newline-delimited JSON protocol.
     - **Trade-off:** The host must manage a process and protocol lifecycle.
   </Tab>

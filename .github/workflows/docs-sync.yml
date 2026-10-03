@@ -103,6 +103,7 @@ jobs:
         run: |
           bun install --frozen-lockfile
           bun run lint
+          node scripts/check-links.mjs
           bun run build
 
       - name: Update state files

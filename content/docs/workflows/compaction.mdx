@@ -166,6 +166,7 @@ Inside a session, run `/context` to verify the resulting threshold and available
 
 <Accordions>
   <Accordion title="Automatic compaction did not run">
+
     1. Run `/context`. Maintenance does not run merely because a session feels long; the estimated usage must cross the resolved threshold.
     2. Check `omp config get compaction.enabled` and `omp config get compaction.methodOrder`.
     3. If you expected idle maintenance, remember that `compaction.idleEnabled` defaults to `false` and the session must exceed `idleThresholdTokens` for at least `idleTimeoutSeconds`.
