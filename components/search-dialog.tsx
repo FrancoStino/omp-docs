@@ -18,7 +18,7 @@ import {
     useSearchList,
 } from 'fumadocs-ui/components/dialog/search';
 import type {SharedProps} from 'fumadocs-ui/contexts/search';
-import {cn} from '@/lib/cn';
+import {cn} from 'cn';
 
 const md = createMarkdownRenderer();
 

@@ -110,7 +110,6 @@ button[data-search-trigger] {
 }
 
 /* The chat composer input matches the button row above it */
-#ai-composer input,
 [data-sidebar] input {
   min-height: 2.25rem;
 }
@@ -238,24 +237,7 @@ article > [class*='fd-cards'] {
   align-self: center;
 }
 
-/* Nav row: the sidebar-collapse button carries mb-auto, which pushes it
-   off-centre. Force vertical centring on the whole row and its links. */
-#nd-nav > div,
-nav[class*='fd-nav'] > div:first-child {
-  align-items: center !important;
-}
-
-#nd-nav > div > *,
-nav[class*='fd-nav'] > div:first-child > * {
-  margin-top: auto;
-  margin-bottom: auto;
-}
-
-#nd-nav button[class*='mb-auto'],
-nav button[class*='mb-auto'] {
-  margin-bottom: auto;
-  margin-top: auto;
-}
+/* Sidebar header row is already centred by the rules above; no nav override needed. */
 
 /* Search hits: keep the readable highlight, no gradient fill that swallows
    the snippet text on a dark popover. */

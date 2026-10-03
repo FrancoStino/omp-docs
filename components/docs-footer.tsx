@@ -4,27 +4,40 @@ import type {FooterProps} from 'fumadocs-ui/layouts/docs/page/slots/footer';
 import {PiLogo} from '@/components/pi-logo';
 
 const CATEGORY_LINKS = [
-    {title: 'Get started', items: ['Quickstart', 'Using omp', 'Sessions']},
-    {title: 'Configure', items: ['Providers', 'Settings', 'Environment variables']},
-    {title: 'Extend', items: ['MCP', 'Skills', 'Plugins', 'Extensions']},
-    {title: 'Reference', items: ['Slash commands', 'CLI', 'Keybindings']},
+    {
+        title: 'Get started',
+        items: [
+            {label: 'Quickstart', href: '/get-started/quickstart'},
+            {label: 'Using omp', href: '/get-started/using'},
+            {label: 'Sessions', href: '/get-started/sessions'},
+        ],
+    },
+    {
+        title: 'Configure',
+        items: [
+            {label: 'Providers', href: '/models/providers'},
+            {label: 'Settings', href: '/configuration/settings'},
+            {label: 'Environment variables', href: '/configuration/env'},
+        ],
+    },
+    {
+        title: 'Extend',
+        items: [
+            {label: 'MCP', href: '/extend/mcp'},
+            {label: 'Skills', href: '/extend/skills'},
+            {label: 'Plugins', href: '/extend/plugins'},
+            {label: 'Extensions', href: '/extend/extension-authoring'},
+        ],
+    },
+    {
+        title: 'Reference',
+        items: [
+            {label: 'Slash commands', href: '/workflows/slash'},
+            {label: 'CLI', href: '/reference/cli'},
+            {label: 'Keybindings', href: '/reference/keybindings'},
+        ],
+    },
 ] as const;
-
-const HREFS: Record<string, string> = {
-    Quickstart: '/get-started/quickstart',
-    'Using omp': '/get-started/using',
-    Sessions: '/get-started/sessions',
-    Providers: '/models/providers',
-    Settings: '/configuration/settings',
-    'Environment variables': '/configuration/env',
-    MCP: '/extend/mcp',
-    Skills: '/extend/skills',
-    Plugins: '/extend/plugins',
-    Extensions: '/extend/extension-authoring',
-    'Slash commands': '/workflows/slash',
-    CLI: '/reference/cli',
-    Keybindings: '/reference/keybindings',
-};
 
 export function DocsFooter({items, ...props}: FooterProps) {
     return (
@@ -63,13 +76,13 @@ export function DocsFooter({items, ...props}: FooterProps) {
                     <div key={group.title}>
                         <p className="mb-3 text-xs font-semibold tracking-wide uppercase">{group.title}</p>
                         <ul className="space-y-2">
-                            {group.items.map((label) => (
-                                <li key={label}>
+                            {group.items.map((item) => (
+                                <li key={item.label}>
                                     <a
-                                        href={HREFS[label]}
+                                        href={item.href}
                                         className="text-fd-muted-foreground hover:text-fd-primary text-sm transition-colors"
                                     >
-                                        {label}
+                                        {item.label}
                                     </a>
                                 </li>
                             ))}

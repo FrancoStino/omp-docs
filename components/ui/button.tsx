@@ -1,10 +1,7 @@
-import {cva, type VariantProps} from 'class-variance-authority';
-
-const primary = 'bg-fd-primary text-fd-primary-foreground hover:bg-fd-primary/80';
+import {cva} from 'class-variance-authority';
 
 const variants = {
-    default: primary,
-    primary,
+    default: 'bg-fd-primary text-fd-primary-foreground hover:bg-fd-primary/80',
     outline: 'border hover:bg-fd-accent hover:text-fd-accent-foreground',
     ghost: 'hover:bg-fd-accent hover:text-fd-accent-foreground',
     secondary:
@@ -16,8 +13,6 @@ export const buttonVariants = cva(
     {
         variants: {
             variant: variants,
-            // `color` and `primary` predate the Shadcn UI compatible names
-            color: variants,
             size: {
                 sm: 'h-8 gap-1 px-2 py-1.5 text-xs',
                 icon: 'h-9 w-9 p-1.5 [&_svg]:size-5',
@@ -28,4 +23,3 @@ export const buttonVariants = cva(
     },
 );
 
-export type ButtonProps = VariantProps<typeof buttonVariants>;

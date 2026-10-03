@@ -8,56 +8,11 @@ import {
     toUIMessageStream,
 } from 'ai';
 import {z} from 'zod';
+import {createFromSource} from 'fumadocs-core/search/server';
 import {source} from '@/lib/source';
-import {Document, type DocumentData} from 'flexsearch';
 import {ChatUIMessage, SearchTool} from '../../../components/ai/search';
 
-interface CustomDocument extends DocumentData {
-    url: string;
-    title: string;
-    description: string;
-    content: string;
-}
-
-const searchServer = createSearchServer();
-
-async function createSearchServer() {
-    const search = new Document<CustomDocument>({
-        document: {
-            id: 'url',
-            index: ['title', 'description', 'content'],
-            store: true,
-        },
-    });
-
-    const docs = await chunkedAll(
-        source.getPages().map(async (page) => {
-            if (!('getText' in page.data)) return null;
-
-            return {
-                title: page.data.title,
-                description: page.data.description,
-                url: page.url,
-                content: await page.data.getText('processed'),
-            } as CustomDocument;
-        }),
-    );
-
-    for (const doc of docs) {
-        if (doc) search.add(doc);
-    }
-
-    return search;
-}
-
-async function chunkedAll<O>(promises: Promise<O>[]): Promise<O[]> {
-    const SIZE = 50;
-    const out: O[] = [];
-    for (let i = 0; i < promises.length; i += SIZE) {
-        out.push(...(await Promise.all(promises.slice(i, i + SIZE))));
-    }
-    return out;
-}
+const searchServer = createFromSource(source);
 
 const nonEmpty = (v: string | undefined): string | undefined =>
     v != null && v.trim() !== '' ? v : undefined;
@@ -156,7 +111,6 @@ const searchTool = tool({
         limit: z.number().int().min(1).max(100).default(30),
     }),
     async execute({query, limit}) {
-        const search = await searchServer;
-        return await search.searchAsync(query, {limit, merge: true, enrich: true});
+        return await searchServer.search(query, {locale: 'en', limit});
     },
 }) satisfies SearchTool;

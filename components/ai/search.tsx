@@ -13,7 +13,7 @@ import {
 } from 'react';
 import {flushSync} from 'react-dom';
 import {Loader2, MessageCircleIcon, Paperclip, Plus, RefreshCw, SearchIcon, Send, X} from 'lucide-react';
-import {cn} from '../../lib/cn';
+import {cn} from 'cn';
 import {buttonVariants} from '../ui/button';
 import {useChat, type UseChatHelpers} from '@ai-sdk/react';
 import {DefaultChatTransport, type Tool, type UIMessage, type UIToolInvocation} from 'ai';
@@ -63,7 +63,7 @@ function writeIndex(sessions: SessionMeta[]) {
 }
 
 function newSessionId(): string {
-    return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    return crypto.randomUUID();
 }
 
 /** The session the chat opens on: the most recent one, or a fresh id. */
@@ -696,23 +696,13 @@ function Inner({children, sessionId}: { children: ReactNode; sessionId: string }
     return <ChatContext value={useMemo(() => ({chat}), [chat])}>{children}</ChatContext>;
 }
 
-export function AISearchTrigger({
-                                    position = 'default',
-                                    className,
-                                    ...props
-                                }: ComponentProps<'button'> & { position?: 'default' | 'float' }) {
+export function AISearchTrigger({className, ...props}: ComponentProps<'button'>) {
     const {open, setOpen} = useAISearchContext();
 
     return (
         <button
             data-state={open ? 'open' : 'closed'}
-            className={cn(
-                position === 'float' && [
-                    'fixed bottom-4 gap-3 w-24 inset-e-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] shadow-lg z-20 transition-[translate,opacity]',
-                    open && 'translate-y-10 opacity-0',
-                ],
-                className,
-            )}
+            className={cn(className)}
             onClick={() => setOpen(!open)}
             {...props}
         >

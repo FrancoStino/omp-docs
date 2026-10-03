@@ -4,7 +4,7 @@ import {useEffect, useState} from 'react';
 import {SparklesIcon} from 'lucide-react';
 import {AISearch, AISearchPanel, AISearchTrigger} from '@/components/ai/search';
 import {buttonVariants} from '@/components/ui/button';
-import {cn} from '@/lib/cn';
+import {cn} from 'cn';
 
 /**
  * Ask AI rail. Mounted inside <DocsLayout> so the panel can occupy the
