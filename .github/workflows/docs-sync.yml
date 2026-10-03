@@ -114,13 +114,13 @@ jobs:
             cliff.md
             changed.txt
 
-      - name: Setup Node
+      - name: Setup Bun
         if: steps.diff.outputs.empty == 'false'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: AI rewrite of touched pages
+      - name: AI rewrite via omp (headless agent)
         id: ai
         if: steps.diff.outputs.empty == 'false'
         env:
@@ -130,11 +130,47 @@ jobs:
           SYNC_FROM: ${{ steps.range.outputs.last }}
           SYNC_TO: ${{ steps.range.outputs.to }}
         run: |
+          bun install -g @oh-my-pi/pi-coding-agent@18.5.1
+          # Auth via env: omp resolves OPENROUTER_API_KEY natively for its
+          # built-in openrouter provider. No config.yml needed.
+          export OPENROUTER_API_KEY="$AI_API_KEY"
+          # Prompt from the evidence the previous steps already produced.
+          # Simplified on purpose: rewrite directly from diff+page (no
+          # EVIDENCE block in the same call — that is what truncated
+          # Laguna output past the limit). Validation stays downstream.
+          {
+            echo "You maintain the documentation site in content/docs (Fumadocs MDX, site root, never /docs prefix)."
+            echo ""
+            echo "Upstream range: $SYNC_FROM -> $SYNC_TO. Changed files:"
+            head -100 changed.txt
+            echo ""
+            echo "For each changed upstream file that maps to a local page by filename stem"
+            echo "(e.g. docs/settings.md -> content/docs/<group>/settings.mdx, max 20 pages):"
+            echo "1. Read the local page and the upstream diff for that file."
+            echo "2. Rewrite ONLY what the diff changes. Keep YAML frontmatter byte-identical."
+            echo "3. Keep the trailing Source footer byte-identical."
+            echo "4. Never invent flags, commands, env vars or defaults not in the diff or the page."
+            echo "5. Keep Steps/Tabs/Callout/Accordions/Cards structure. No imports. No <id> inside JSX."
+            echo "6. Use codemode (parallel tool calls) when tracing one symbol across many pages."
+            echo "7. If a file has no user-visible effect, leave its page unchanged."
+            echo ""
+            echo "When done, print one line per touched page: REWRITTEN <path> or SKIPPED <path> <reason>."
+            echo "Retry rate-limited (429) tool/model calls up to 3 times with backoff before giving up on a page."
+          } > /tmp/sync-prompt.md
+          HOME=/tmp/omp-home omp -p --model "$AI_MODEL" < /tmp/sync-prompt.md 2>&1 | tee omp-run.log || true
+          # ai-sync.mjs stays as the validator: it re-checks every touched page
+          # (frontmatter/footer/grounding) and writes the ai-report.md contract.
           bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}" || true
-          REWRITTEN="$(grep -oE 'Rewritten: [0-9]+' ai-report.md 2>/dev/null | tail -1 | grep -oE '[0-9]+' || true)"
+          REWRITTEN="$(git diff --name-only -- content/docs | wc -l | tr -d ' ')"
           echo "rewritten=${REWRITTEN:-0}" >> "$GITHUB_OUTPUT"
-          echo "## ai-report" >> "$GITHUB_STEP_SUMMARY"
-          cat ai-report.md >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## ai-report (omp headless + validation)"
+            echo
+            cat ai-report.md
+            echo
+            echo "## omp run log (tail)"
+            tail -40 omp-run.log
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload AI report
         if: steps.diff.outputs.empty == 'false' && always()
