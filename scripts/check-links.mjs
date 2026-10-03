@@ -55,7 +55,7 @@ for (const file of files.sort()) {
 	}
 
 	// 3. No /docs/ prefix resurrected by the model.
-	for (const href of new Set([...text.matchAll(/(?:href="\]\()\/?docs\//g)].map((m) => m[0]))) {
+	for (const href of new Set([...text.matchAll(/(href="|\]\()\/?docs\//g)].map((m) => m[0]))) {
 		failures.push(`${rel}: /docs/ prefix reintroduced (${href.trim()})`);
 	}
 
