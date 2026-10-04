@@ -129,14 +129,12 @@ jobs:
           SYNC_TO: ${{ steps.range.outputs.to }}
         run: |
           bun install -g @oh-my-pi/pi-coding-agent@18.5.1
-          # Auth: single muse-spark key from the secret. The vendored
-          # extension reads only AI_API_KEY, pins the opencode client
-          # headers (403 workaround) and injects the bearer per request.
-          # No ANTHROPIC/OpenRouter keys, no OAuth, no fallbacks.
-          export AI_API_KEY="$AI_API_KEY"
-          mkdir -p /tmp/omp-home/extensions
-          cp .github/omp-sync-config.yml /tmp/omp-home/config.yml
-          cp .github/omp-sync-extensions/opencode-zen-free.ts /tmp/omp-home/extensions/
+          # Auth: OPENCODE_API_KEY alone is enough — omp resolves it natively
+          # for opencode-zen (proven: dummy key reaches the model with 401,
+          # not "No API key found"). No models.yml, no HOME/DIR hacks.
+          # The vendored extension (-e) only pins opencode client headers
+          # (403 workaround); the key comes from env, never from files.
+          export OPENCODE_API_KEY="$AI_API_KEY"
           # Prompt from the evidence the previous steps already produced.
           # Simplified on purpose: rewrite directly from diff+page (no
           # EVIDENCE block in the same call — that is what truncated
@@ -160,7 +158,10 @@ jobs:
             echo "When done, print one line per touched page: REWRITTEN <path> or SKIPPED <path> <reason>."
             echo "Retry rate-limited (429) tool/model calls up to 3 times with backoff before giving up on a page."
           } > /tmp/sync-prompt.md
-          HOME=/tmp/omp-home timeout 1500 omp -p --model "opencode-zen/muse-spark-1.3-contributor-free" --no-session < /tmp/sync-prompt.md 2>&1 | tee omp-run.log || true
+          timeout 1500 omp -p --model "opencode-zen/muse-spark-1.3-contributor-free" \
+            --config .github/omp-sync-config.yml \
+            -e .github/omp-sync-extensions/opencode-zen-free.ts \
+            < /tmp/sync-prompt.md 2>&1 | tee omp-run.log || true
           # Rewrite count = what omp actually changed. ai-sync.mjs is out of
           # the loop: it validated only its own EVIDENCE/PAGE format, which
           # omp never produces — every run ended Rewritten: 0 with omp's
