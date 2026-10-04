@@ -187,10 +187,16 @@ jobs:
         if: steps.diff.outputs.empty == 'false'
         run: |
           # Diff-aware: fail only when the run REMOVES a Source footer or
-          # touches frontmatter. Pages that already lacked a footer before
-          # this run do not block the sync (backfill them separately).
+          # touches frontmatter OF A PRE-EXISTING page. Brand-new pages
+          # (untracked) legitimately ADD title:/description: lines — the
+          # frontmatter check must skip them, or autonomy can never pass.
           FAIL=0
+          TRACKED="$(git ls-files -- 'content/docs/**/*.mdx')"
           for f in $(git diff --name-only -- 'content/docs/**/*.mdx'); do
+            case " $TRACKED " in
+              *" $f "*) ;;
+              *) continue ;;
+            esac
             git diff -U0 -- "$f" | grep -qE '^\+(title|description):' && { echo "FRONTMATTER CHANGED: $f"; FAIL=1; }
             if git diff -U0 -- "$f" | grep -qE '^-.*Source: \[omp\.sh\]'; then
               echo "FOOTER REMOVED: $f"; FAIL=1;
@@ -234,6 +240,9 @@ jobs:
           git checkout -B "$BRANCH"
           git add .docs-sync-state public/sync-state.json
           git add content/docs
+          # Capture BEFORE commit: after commit the working diff is empty.
+          REWRITTEN_FILES="$(git diff --cached --name-only -- content/docs)"
+          [ -z "$REWRITTEN_FILES" ] && { echo "nothing staged, skipping PR"; exit 0; }
           git -c user.name="docs-sync" -c user.email="docs-sync@users.noreply.github.com" commit -m "docs: sync upstream $SHORT" || true
           git push -u origin "$BRANCH" --force-with-lease
           N_FILES="$(wc -l < changed.txt | tr -d ' ')"
@@ -250,7 +259,18 @@ jobs:
             [ "$(wc -l < changed.txt)" -gt 50 ] && echo "…and $(( $(wc -l < changed.txt) - 50 )) more (see artifact)"
             echo
             echo "## omp rewrite"
-            git diff --name-only -- content/docs | head -30
+            echo "$REWRITTEN_FILES" | head -30
+            echo
+            echo "## Preview (Vercel, auto-deployed for this PR)"
+            echo "Open each rewritten page on the Preview deployment linked above ("\
+              "Vercel bot comment) — replace \`<preview-host>\` with its host:"
+            echo "$REWRITTEN_FILES" | head -30 | while IFS= read -r f; do
+              # content/docs/<group>/<slug>.mdx -> /<group>/<slug>
+              slug="$(basename "$f" .mdx)"
+              group="$(basename "$(dirname "$f")")"
+              if [ "$slug" = "index" ]; then url="/"; elif [ "$group" = "docs" ]; then url="/$slug"; else url="/$group/$slug"; fi
+              echo "- \`$f\` → https://\`<preview-host>\`$url"
+            done
           } > "$BODY_FILE"
           if [ "$(wc -c < "$BODY_FILE")" -ge 60000 ]; then
             head -c 60000 "$BODY_FILE" > "$BODY_FILE.cut"
