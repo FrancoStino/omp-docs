@@ -130,9 +130,8 @@ jobs:
         run: |
           bun install -g @oh-my-pi/pi-coding-agent@18.5.1
           # Auth: single muse-spark key from the secret. The vendored
-          # extension reads AI_API_KEY (fallback OPENCODE_ZEN_API_KEY), pins
-          # the opencode client headers (403 workaround) and injects the
-          # bearer per request.
+          # extension reads only AI_API_KEY, pins the opencode client
+          # headers (403 workaround) and injects the bearer per request.
           # No ANTHROPIC/OpenRouter keys, no OAuth, no fallbacks.
           export AI_API_KEY="$AI_API_KEY"
           mkdir -p /tmp/omp-home/extensions
