@@ -1,0 +1,40 @@
+# CI profile for the docs-sync job. Derived from the maintainer's local
+# config: same muse-spark roles, approval yolo — everything that can keep
+# the process alive in headless mode is OFF (advisor, autolearn continuation,
+# auto-resume, background eval). TUI-only keys are dropped: they are dead
+# weight in CI and rot silently.
+setupVersion: 2
+modelRoles:
+  default: opencode-zen/muse-spark-1.3-contributor-free
+  slow: opencode-zen/muse-spark-1.3-contributor-free:auto
+  smol: opencode-zen/muse-spark-1.3-contributor-free:auto
+  tiny: opencode-zen/muse-spark-1.3-contributor-free:auto
+  vision: opencode-zen/muse-spark-1.3-contributor-free:auto
+  plan: opencode-zen/muse-spark-1.3-contributor-free:auto
+  task: opencode-zen/muse-spark-1.3-contributor-free:auto
+  judge: opencode-zen/muse-spark-1.3-contributor-free:auto
+advisor:
+  enabled: false
+autolearn:
+  enabled: false
+  autoContinue: false
+autoResume: false
+eval:
+  autoBackground:
+    enabled: false
+plan:
+  defaultOnStartup: false
+  autosave: false
+  enabled: true
+edit:
+  mode: hashline
+  autoRepair:
+    enabled: true
+lsp:
+  formatOnWrite: true
+  diagnosticsOnEdit: true
+checkpoint: true
+tools:
+  approvalMode: yolo
+read:
+  renderMarkdown: true

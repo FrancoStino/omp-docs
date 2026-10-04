@@ -124,17 +124,20 @@ jobs:
         id: ai
         if: steps.diff.outputs.empty == 'false'
         env:
-          AI_BASE_URL: ${{ vars.AI_BASE_URL }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          AI_MODEL: ${{ vars.AI_MODEL }}
           SYNC_FROM: ${{ steps.range.outputs.last }}
           SYNC_TO: ${{ steps.range.outputs.to }}
         run: |
           bun install -g @oh-my-pi/pi-coding-agent@18.5.1
-          # Auth via env: omp resolves OPENROUTER_API_KEY natively for its
-          # built-in openrouter provider. No config.yml needed.
-          export OPENROUTER_API_KEY="$AI_API_KEY"
-          mkdir -p /tmp/omp-home
+          # Auth: single muse-spark key from the secret. The vendored
+          # extension reads AI_API_KEY (fallback OPENCODE_ZEN_API_KEY), pins
+          # the opencode client headers (403 workaround) and injects the
+          # bearer per request.
+          # No ANTHROPIC/OpenRouter keys, no OAuth, no fallbacks.
+          export AI_API_KEY="$AI_API_KEY"
+          mkdir -p /tmp/omp-home/extensions
+          cp .github/omp-sync-config.yml /tmp/omp-home/config.yml
+          cp .github/omp-sync-extensions/opencode-zen-free.ts /tmp/omp-home/extensions/
           # Prompt from the evidence the previous steps already produced.
           # Simplified on purpose: rewrite directly from diff+page (no
           # EVIDENCE block in the same call — that is what truncated
@@ -158,28 +161,39 @@ jobs:
             echo "When done, print one line per touched page: REWRITTEN <path> or SKIPPED <path> <reason>."
             echo "Retry rate-limited (429) tool/model calls up to 3 times with backoff before giving up on a page."
           } > /tmp/sync-prompt.md
-          HOME=/tmp/omp-home omp -p --model "$AI_MODEL" < /tmp/sync-prompt.md 2>&1 | tee omp-run.log || true
-          # ai-sync.mjs stays as the validator: it re-checks every touched page
-          # (frontmatter/footer/grounding) and writes the ai-report.md contract.
-          bun scripts/ai-sync.mjs changed.txt ai-report.md "${{ steps.range.outputs.to }}" || true
+          HOME=/tmp/omp-home timeout 1500 omp -p --model "opencode-zen/muse-spark-1.3-contributor-free" --no-session < /tmp/sync-prompt.md 2>&1 | tee omp-run.log || true
+          # Rewrite count = what omp actually changed. ai-sync.mjs is out of
+          # the loop: it validated only its own EVIDENCE/PAGE format, which
+          # omp never produces — every run ended Rewritten: 0 with omp's
+          # output passing through unvalidated. Mechanical gates below
+          # (frontmatter/footer check, check-links, lint, build) + human
+          # review catch real damage instead.
           REWRITTEN="$(git diff --name-only -- content/docs | wc -l | tr -d ' ')"
           echo "rewritten=${REWRITTEN:-0}" >> "$GITHUB_OUTPUT"
           {
-            echo "## ai-report (omp headless + validation)"
-            echo
-            cat ai-report.md
-            echo
             echo "## omp run log (tail)"
             tail -40 omp-run.log
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload AI report
+      - name: Upload omp run log
         if: steps.diff.outputs.empty == 'false' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-report
-          path: ai-report.md
+          name: omp-run
+          path: omp-run.log
           if-no-files-found: warn
+
+      - name: Frontmatter/footer guard
+        if: steps.diff.outputs.empty == 'false'
+        run: |
+          # Mechanical replacement for the retired ai-sync validator:
+          # no touched page may change its frontmatter or drop the footer.
+          FAIL=0
+          for f in $(git diff --name-only -- 'content/docs/**/*.mdx'); do
+            git diff -U0 -- "$f" | grep -E '^\+.*^(title|description):' && { echo "FRONTMATTER CHANGED: $f"; FAIL=1; }
+            grep -q 'Source: \[omp.sh\]' "$f" || { echo "FOOTER MISSING: $f"; FAIL=1; }
+          done
+          exit $FAIL
 
       - name: Build check
         if: steps.diff.outputs.empty == 'false'
@@ -200,9 +214,9 @@ jobs:
           printf '{"sha":"%s","date":"%s","source":"upstream-main"}\n' "$TO" "$(date -u +%F)" > public/sync-state.json
           {
             echo
-            echo "## AI rewrite"
+            echo "## omp rewrite"
             echo
-            cat ai-report.md
+            git diff --name-only -- content/docs
           } >> sync-body.md
 
       - name: Open or update rolling PR
@@ -225,15 +239,15 @@ jobs:
           {
             echo "Upstream diff $LAST -> $TO ($N_COMMITS commits, $N_FILES files)"
             echo
-            echo "Full diff, commits, changelog and AI report are in the run artifacts"
-            echo "(\`sync-evidence\`, \`ai-report\`) — the body below is a summary."
+            echo "Full diff, commits, changelog and omp run log are in the run artifacts"
+            echo "(\`sync-evidence\`, \`omp-run\`) — the body below is a summary."
             echo
             echo "## changed files"
             head -50 changed.txt
             [ "$(wc -l < changed.txt)" -gt 50 ] && echo "…and $(( $(wc -l < changed.txt) - 50 )) more (see artifact)"
             echo
-            echo "## AI rewrite"
-            head -c 20000 ai-report.md
+            echo "## omp rewrite"
+            git diff --name-only -- content/docs | head -30
           } > "$BODY_FILE"
           if [ "$(wc -c < "$BODY_FILE")" -ge 60000 ]; then
             head -c 60000 "$BODY_FILE" > "$BODY_FILE.cut"

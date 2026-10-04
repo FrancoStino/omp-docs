@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored omp extension: runs inside omp/Bun, not this project.
+    ".github/omp-sync-extensions/**",
   ]),
 ]);
 
