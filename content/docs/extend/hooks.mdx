@@ -126,6 +126,7 @@ Payload columns list the public top-level fields in addition to `type`. A bare r
 | `session.compacting` | `sessionId`, `messages` | `{ context?, prompt?, preserveData? }`. The latest returned result replaces earlier results. Use this to customize normal compaction without constructing a complete compaction result. |
 | `session_before_tree` | `preparation`, `signal` | `{ cancel?, summary? }`. First cancellation wins; otherwise the latest result applies. A custom summary is used only when `preparation.userWantsSummary` is true. |
 | `session_stop` | `messages`, `turn_id`, `last_assistant_message?`, `session_id`, `session_file?`, `stop_hook_active`, `signal` | `{ continue: true, additionalContext }` or `{ decision: "block", reason }` requests one model-visible continuation. The first actionable continuation with non-empty context/reason wins. |
+`session_before_branch` and `session_branch` carry `reason`, which decides what `session_before_branch.entryId` means. For `"branch"` (`branch(entryId)`, `/branch`) it is the user message being rewound: it and everything after it are dropped. For `"fork"` (`AgentSession.fork(entryId)`, RPC `fork` with an `entryId`) and `"btw"` (`/btw` promotion) it is the last entry kept in the new session.
 
 ### Tool interception details
 
