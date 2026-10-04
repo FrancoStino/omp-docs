@@ -186,12 +186,15 @@ jobs:
       - name: Frontmatter/footer guard
         if: steps.diff.outputs.empty == 'false'
         run: |
-          # Mechanical replacement for the retired ai-sync validator:
-          # no touched page may change its frontmatter or drop the footer.
+          # Diff-aware: fail only when the run REMOVES a Source footer or
+          # touches frontmatter. Pages that already lacked a footer before
+          # this run do not block the sync (backfill them separately).
           FAIL=0
           for f in $(git diff --name-only -- 'content/docs/**/*.mdx'); do
-            git diff -U0 -- "$f" | grep -E '^\+.*^(title|description):' && { echo "FRONTMATTER CHANGED: $f"; FAIL=1; }
-            grep -q 'Source: \[omp.sh\]' "$f" || { echo "FOOTER MISSING: $f"; FAIL=1; }
+            git diff -U0 -- "$f" | grep -qE '^\+(title|description):' && { echo "FRONTMATTER CHANGED: $f"; FAIL=1; }
+            if git diff -U0 -- "$f" | grep -qE '^-.*Source: \[omp\.sh\]'; then
+              echo "FOOTER REMOVED: $f"; FAIL=1;
+            fi
           done
           exit $FAIL
 
