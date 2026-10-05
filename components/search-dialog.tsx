@@ -120,14 +120,14 @@ function dedupe<T extends { url?: string; content?: unknown }>(items: T[]): T[] 
     return out;
 }
 
-export function DocsSearchDialog({open, onOpenChange, dialogHandle}: SharedProps) {
+export function DocsSearchDialog({open, onOpenChange}: SharedProps) {
     const client = useMemo(() => fetchClient({api: '/api/search'}), []);
     const {search, setSearch, query} = useDocsSearch({client, delayMs: 150});
     const items = query.data !== 'empty' && Array.isArray(query.data) ? dedupe(query.data) : null;
 
     return (
         <SearchDialog open={open} onOpenChange={onOpenChange} search={search} onSearchChange={setSearch}
-                      isLoading={query.isLoading} dialogHandle={dialogHandle}>
+                      isLoading={query.isLoading}>
             <SearchDialogOverlay/>
             <SearchDialogContent>
                 <SearchDialogHeader>
