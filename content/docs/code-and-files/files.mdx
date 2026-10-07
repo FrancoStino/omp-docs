@@ -167,6 +167,10 @@ It likely requires JavaScript, a login, or interaction. Ask omp to use the brows
 
 Ask for the exact formatter/check, or enable the relevant options in `/settings` under **Files → LSP**.
 </Accordion>
+<Accordion title="An edit is refused for a special file">
+
+Edits apply to regular files and directories. A FIFO, socket, or device node is refused with an error naming its kind instead of blocking while reading it. Ask omp to work with a regular file, or use a command that understands the special file.
+</Accordion>
 </Accordions>
 
 
