@@ -242,6 +242,8 @@ For reusable tools, commands, hooks, and UI integrations loaded from authored pa
 
 Calling `prompt()` while the session is already streaming requires `streamingBehavior: "steer"` or `"followUp"`; calling `steer()` or `followUp()` directly is clearer for most hosts.
 
+Aside delivery (`deliverAs: "aside"`) lands at the next safe step boundary without interrupting the current tool batch; the one exception is a running interruptible wait (or `vibe_wait`), which an aside ends so the message is not delayed behind it.
+
 <Callout type="warn" title="Always dispose sessions">
   Use `try`/`finally` around the lifetime of every session. If your host has its own asynchronous shutdown work, call `session.beginDispose()` before the first shutdown `await`, finish the host cleanup, and then `await session.dispose()`. `beginDispose()` closes admission to new work; it does not replace `dispose()`.
 </Callout>
