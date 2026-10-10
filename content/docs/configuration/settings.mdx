@@ -216,9 +216,14 @@ Start from the interactive controls, then follow the dedicated guides rather tha
 compaction:
   enabled: true
   thresholdPercent: 80
+  modelThresholds:
+    "deepseek/*": 90000
+    "openrouter/anthropic/*": "60%"
 memory:
   backend: off
 ```
+
+Per-model triggers in `compaction.modelThresholds` replace both threshold settings for the models they match. Keys are exact `provider/model-id` entries or `*`-terminated prefixes, with an exact key winning over prefixes. To set one interactively, select a role or fallback row in the Roles view of `/models` and press `k`, then type a count such as `90000` or a percentage such as `80%` (empty input resets). The hub refuses the edit when the project config sets the same model key; change it in the project config instead. A `task.agentCompactionThresholdOverrides` entry outranks model entries for that agent.
 
 Compaction has several strategies, thresholds, and background modes; see [Compaction](/workflows/compaction). Memory backends and retention are covered in [Memory](/workflows/memory).
 
@@ -249,7 +254,7 @@ For exact key discovery, the family index below maps current namespaces to where
 - **Files:** `edit`, `readLineNumbers`, `read`, and `lsp`.
 - **Shell:** `shellPath`, `bash`, `bashInterceptor`, `shellMinimizer`, `eval`, `python`, `ruby`, and `julia`.
 - **Tools:** `tools`, `todo`, `glob`, `grep`, `astGrep`, `astEdit`, `debug`, `launch`, `speechgen`, `generate_image`, `inspect_image`, `computer`, `checkpoint`, `fetch`, `vault`, `github`, `web_search`, `security`, `browser`, `async`, `irc`, `mcp`, `tasks`, `extensionHandlers`, and developer options under `dev`.
-- **Tasks:** `plan`, `goal`, `title`, `task`, `worktree`, `skills`, and `commands`.
+- **Tasks:** `plan`, `goal`, `title`, `task`, `task.agentAccountPools`, `worktree`, `skills`, and `commands`. `task.agentAccountPools` maps an exact task/eval agent name to provider ids to OAuth identity keys (listed by `omp usage accounts`), restricting that agent to those accounts.
 - **Providers and services:** `providers`, `provider`, `disabledProviders`, `secrets`, `live`, `tts`, `speech`, `codexResets`, `exa`, `searxng`, and auth-broker settings under `auth`.
 - **Advanced CLI/YAML-only families:** `extensions`, `disabledExtensions`, `commit`, `gc`, `thinkingBudgets`, plus advanced leaves under `statusLine`, `images`, `tui`, `retry`, `compaction`, `memories`, `autolearn`, `mnemopi`, `hindsight`, `bashInterceptor`, `shellMinimizer`, `eval`, `task`, and `skills`.
 

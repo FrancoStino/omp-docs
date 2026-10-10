@@ -145,6 +145,8 @@ Inside a session, run `/context` to verify the resulting threshold and available
 | `compaction.methodOrder` | `[remote, snapcompact, handoff, shake, soft]` | Ordered automatic fallback list. Supported values are `remote`, `snapcompact`, `handoff`, `shake`, and `soft`. |
 | `compaction.thresholdTokens` | `-1` | Fixed trigger when greater than zero. It takes precedence over `thresholdPercent`. |
 | `compaction.thresholdPercent` | `-1` | Percentage trigger when greater than zero. `-1` uses reserve-based automatic sizing. Values are clamped to 1–99%. |
+| `compaction.modelThresholds` | `{}` | Per-model trigger keyed by `provider/model-id` or a `*`-terminated prefix: a token count or percentage that replaces both threshold settings while that model is active. Set it from the `/models` Roles view (`k`). |
+| `compaction.modelThresholdsEnabled` | `true` | Whether per-model triggers apply. Subagents with a `task.agentCompactionThresholdOverrides` entry run with it off. |
 | `compaction.reserveTokens` | unset | Headroom used by reserve-based sizing. When unset, omp normally reserves the larger of 16,384 tokens or 15% of the model window; small windows fall back to the proportional reserve. |
 | `compaction.keepRecentTokens` | `20000` | Target amount of recent conversation retained verbatim after summarizing compaction. |
 | `compaction.midTurnEnabled` | `true` | Allows maintenance at safe boundaries during a long turn involving many commands or file reads. |
