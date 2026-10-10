@@ -205,10 +205,13 @@ Start from the interactive controls, then follow the dedicated guides rather tha
 
 - tool permission policy: [Approvals](/configuration/approvals)
 - advisor review: [Advisor](/workflows/advisor)
+- shared checkouts: `bash.gitGuard` refuses destructive git commands (stash, hard resets, branch moves) unless a merge or rebase conflict is being resolved
+
 - desktop automation: [Computer](/code-and-files/computer)
 - security review: [Security](/workflows/security)
 - prompt-triggered modes: [Magic keywords](/extend/magic-keywords)
 - pre-execution repository walks: [Prewalk](/models/prewalk)
+
 
 ### Configure compaction and memory
 
@@ -221,6 +224,21 @@ memory:
 ```
 
 Compaction has several strategies, thresholds, and background modes; see [Compaction](/workflows/compaction). Memory backends and retention are covered in [Memory](/workflows/memory).
+
+Per-model compaction triggers replace both threshold settings for the models they match. To set one, open `/models`, select a role or fallback row in the **Roles** view, and press `k` (or choose **Compaction limit**), then type `90000`, `90k`, `1M`, or `80%`; empty input resets it. That writes the exact `provider/model-id` key to the global config. By hand:
+
+```yaml
+compaction:
+  thresholdPercent: 80
+  modelThresholds:
+    "deepseek/*": 90000
+    "openrouter/anthropic/*": "60%"
+```
+
+- An exact `provider/model-id` key wins; otherwise the longest matching `*`-terminated prefix applies. Keys need a `provider/` part and `*` is only allowed at the end.
+- The trigger follows the active model: switching models uses the new model's entry.
+- A `task.agentCompactionThresholdOverrides` entry outranks model entries for that agent.
+- The hub refuses an edit when the project config sets the same model key; change it in the project config instead.
 
 ## Complete setting groups
 
@@ -250,7 +268,7 @@ For exact key discovery, the family index below maps current namespaces to where
 - **Shell:** `shellPath`, `bash`, `bashInterceptor`, `shellMinimizer`, `eval`, `python`, `ruby`, and `julia`.
 - **Tools:** `tools`, `todo`, `glob`, `grep`, `astGrep`, `astEdit`, `debug`, `launch`, `speechgen`, `generate_image`, `inspect_image`, `computer`, `checkpoint`, `fetch`, `vault`, `github`, `web_search`, `security`, `browser`, `async`, `irc`, `mcp`, `tasks`, `extensionHandlers`, and developer options under `dev`.
 - **Tasks:** `plan`, `goal`, `title`, `task`, `worktree`, `skills`, and `commands`.
-- **Providers and services:** `providers`, `provider`, `disabledProviders`, `secrets`, `live`, `tts`, `speech`, `codexResets`, `exa`, `searxng`, and auth-broker settings under `auth`.
+- **Providers and services:** `providers`, `provider`, `disabledProviders`, `secrets`, `live`, `tts` (including `tts.localSpeed`, the local Kokoro speaking rate for the `tts` tool and `omp say`), `speech` (including `speech.speed` for vocalization), `codexResets`, `exa`, `searxng`, and auth-broker settings under `auth`. Both speeds default to `1` (normal) and are clamped to `0.5`–`2.5`.
 - **Advanced CLI/YAML-only families:** `extensions`, `disabledExtensions`, `commit`, `gc`, `thinkingBudgets`, plus advanced leaves under `statusLine`, `images`, `tui`, `retry`, `compaction`, `memories`, `autolearn`, `mnemopi`, `hindsight`, `bashInterceptor`, `shellMinimizer`, `eval`, `task`, and `skills`.
 
 Keybinding remaps do not live in this file: use `keybindings.yaml` as described in [Keybindings](/reference/keybindings#remap-shortcuts).

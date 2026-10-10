@@ -94,13 +94,13 @@ The [Model roles](/models/roles) page covers automatic selection, project storag
 
 ## How an agent gets its model
 
-For an ordinary named worker, omp tries these sources in order:
+For an ordinary named worker, omp resolves the model in this order:
 
 1. **Settings override** — `task.agentModelOverrides.<agent-name>`.
 2. **Agent default** — the agent's `model` frontmatter, which may contain one selector or an ordered list.
 3. **Normal fallback** — the parent session's active model, then its configured/default model fallback.
 
-A selector in either of the first two layers may be a concrete `provider/model` or a role alias such as `@slow`. Role aliases are expanded through `modelRoles` at launch.
+A selector in either of the first two layers may be a concrete `provider/model` or a role alias such as `@slow`. Role aliases are expanded through `modelRoles` at launch. There is no per-call `model` override: the task wire schema does not expose that field, so `task.agentModelOverrides` is the highest-precedence way to reroute one agent.
 
 Use `task.agentModelOverrides` when you want to reroute an existing agent without copying or editing its definition. Prefer a role alias there when several agents or features should move together:
 
@@ -180,7 +180,7 @@ Use `/settings` for broader defaults and limits. The **Generic Task Prewalk** se
     Confirm the exact agent name and source in `/agents`. A project definition may be shadowing the user or bundled definition.
 </Accordion>
   <Accordion title="Wrong model resolved">
-    Inspect the effective model in `/agents`, then check `task.agentModelOverrides`, the agent's `model` frontmatter, and the referenced role in `/model`, in that order. Also confirm that the selected provider is authenticated.
+    Inspect the effective model in `/agents`, then check `task.agentModelOverrides`, the agent's `model` frontmatter, and the referenced role in `/model`, in that order. There is no per-call model parameter to check. Also confirm that the selected provider is authenticated.
 </Accordion>
   <Accordion title="Unknown or disabled agent">
     Check the case-sensitive name and enabled state, then press `Ctrl` + `R` after file changes.

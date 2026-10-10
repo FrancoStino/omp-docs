@@ -82,6 +82,8 @@ Give important work a stable title instead of relying on its first-message previ
 
 `/pin` toggles the current session at the top of resume lists. `/pin <session-id>` toggles another saved session without opening it. Pins follow a session if you move it to another project directory.
 
+A generated title keeps the current title's icon card (`<icon> <CODE>: `) when it has one, and a title without one gets a new card unless `title.icons` is `boring`. A failed card leaves the title plain.
+
 ### Move a session to another project
 
 If the conversation now belongs with a different checkout or worktree, move it rather than relying on the all-projects picker:

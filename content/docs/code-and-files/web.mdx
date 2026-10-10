@@ -208,6 +208,8 @@ Confirm `web_search.enabled` is on. Check **Web Search Provider Order** and **Ex
 
 The page probably renders in JavaScript, requires cookies, blocks automated extraction, or embeds content in another frame. Ask omp to open it in the managed browser. If it is private, log in visibly or use a deliberately shared relay tab.
 
+X posts and profiles (`x.com`, `twitter.com`) cannot be scraped, so omp reads them through an xAI model instead. Ask for the post or profile by URL the same way. This bills the xAI account and needs an xAI credential; without one, omp reports that it cannot read the page.
+
 ### Managed Chromium does not open
 
 Confirm `browser.enabled` is on and allow the first-run Chromium download to finish. Switch `browser.headless` to `false` to make launch and navigation visible. If a configured `browser.cdpUrl` is stale, remove it so omp can launch its managed browser again.

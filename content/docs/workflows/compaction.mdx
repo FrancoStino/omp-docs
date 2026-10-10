@@ -145,6 +145,7 @@ Inside a session, run `/context` to verify the resulting threshold and available
 | `compaction.methodOrder` | `[remote, snapcompact, handoff, shake, soft]` | Ordered automatic fallback list. Supported values are `remote`, `snapcompact`, `handoff`, `shake`, and `soft`. |
 | `compaction.thresholdTokens` | `-1` | Fixed trigger when greater than zero. It takes precedence over `thresholdPercent`. |
 | `compaction.thresholdPercent` | `-1` | Percentage trigger when greater than zero. `-1` uses reserve-based automatic sizing. Values are clamped to 1–99%. |
+| `compaction.modelThresholds` | `{}` | Per-model trigger keyed by `provider/model-id` or a `*`-terminated prefix (for example `deepseek/*`): a token count (`90000`) or a percentage (`"80%"`). Replaces both threshold settings while that model is active. Set it in the `/models` Roles view with `k`, or see [Settings](/configuration/settings) for the YAML form. |
 | `compaction.reserveTokens` | unset | Headroom used by reserve-based sizing. When unset, omp normally reserves the larger of 16,384 tokens or 15% of the model window; small windows fall back to the proportional reserve. |
 | `compaction.keepRecentTokens` | `20000` | Target amount of recent conversation retained verbatim after summarizing compaction. |
 | `compaction.midTurnEnabled` | `true` | Allows maintenance at safe boundaries during a long turn involving many commands or file reads. |
@@ -159,6 +160,8 @@ Inside a session, run `/context` to verify the resulting threshold and available
 | `compaction.remoteEndpoint` | unset | Uses a custom OpenAI-compatible remote compaction endpoint. Most users should leave this unset. |
 | `compaction.remoteStreamingV2Enabled` | `true` | Uses streaming remote compaction on compatible routes. |
 | `compaction.v2RetainedMessageBudget` | `64000` | Caps the recent-message budget retained by streaming remote compaction. |
+
+Per-model triggers follow the active model, so switching models can change the threshold mid-session. An exact `provider/model-id` key wins over the longest matching prefix, and a per-agent `task.agentCompactionThresholdOverrides` entry still outranks model entries for that agent.
 
 `display.collapseCompacted` is a related appearance setting. It defaults to `true`, hiding pre-compaction history from the live transcript while leaving the summary divider visible. Set it to `false` if you prefer the full stored transcript inline.
 

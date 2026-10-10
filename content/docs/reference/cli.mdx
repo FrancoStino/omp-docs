@@ -232,7 +232,7 @@ Every public subcommand accepts `--help`. Aliases are shown beside their canonic
 | `token` | Print or inspect the stored credential for a provider. |
 | `ttsr` | `test`, `list`, or `scan` Time-Traveling Stream Rules. |
 | `update` | Check for or install omp and plugin updates. |
-| `usage` | Show provider limits or `invalidate` cached usage reports. |
+| `usage` | Show provider limits, `clients` token burn per client, or `accounts` OAuth account identity keys; `invalidate` clears cached usage reports. |
 | `worktree`, `wt` | `list` or `clear` agent-managed worktrees. |
 
 ## Subcommand reference
@@ -260,7 +260,7 @@ Every public subcommand accepts `--help`. Aliases are shown beside their canonic
 | `omp dry-balance [model] [flags]` | Tests account selection without running sessions. `--model <selector>`; `--count <n>`; `--concurrency <n>`; `--json`; `--bench` sends one live benchmark request per OAuth account. |
 | `omp models [action] [pattern] [flags]` | Bare or `ls` lists models; a provider name lists that provider; `find <text>` searches; `refresh` refreshes the catalog. Flags: `--json`; `-e`, `--extension <path>` repeatable; `--no-extensions`; `--config <file>` repeatable. |
 | `omp token <provider> [flags]` | Prints the selected API key or OAuth access token. `--raw` avoids unpacking nested credential JSON; `--force-refresh` refreshes OAuth; `-l`, `--list` lists accounts; `-a`, `--account <n>` selects a 1-based account. Treat output as a secret. |
-| `omp usage [invalidate] [flags]` | Bare command shows live provider limits; `invalidate` clears cached reports. `-j`, `--json`; `-p`, `--provider <id>`; `-r`, `--redact`; `--history`; `-d`, `--days <n>`. |
+| `omp usage [clients\|accounts\|invalidate] [flags]` | Bare command shows live provider limits; `clients` breaks token burn down per client (with `--days`); `accounts` lists each OAuth account's provider and identity key (the key `task.agentAccountPools` takes; no tokens, `--json` supported); `invalidate` clears cached reports. `-j`, `--json`; `-p`, `--provider <id>`; `-r`, `--redact`; `--history`; `-d`, `--days <n>`. |
 
 ### Plugins, marketplaces, and configuration
 

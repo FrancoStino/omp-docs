@@ -108,6 +108,8 @@ Even isolated edits can conflict when integrated, especially when workers touch 
 
 </Callout>
 
+A named worker can also be pinned to specific OAuth accounts: an exact `task.agentAccountPools.<agent-name>` entry maps provider ids to OAuth identity keys (run `omp usage accounts` to list them). For each listed provider the worker authenticates only with those accounts — never another account or an API key — and the request fails when none can serve. It does not pick models; model and retry-fallback policy still decide which provider the worker calls.
+
 ## Cost, safety, and limits
 
 <Callout type="warn">

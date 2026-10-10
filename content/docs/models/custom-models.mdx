@@ -282,6 +282,8 @@ Most OpenAI-compatible services work without `compat`. Set these fields only to 
 
 **Bedrock prompt caching:** `promptCacheMode` (`none`, `automatic`, or `explicit`), `promptCacheMinimumTokens`, `promptCacheMaximumCheckpoints`, and `supportsLongPromptCacheRetention`.
 
+Unknown keys in provider, model, and `modelOverrides` `compat` blocks produce non-fatal warnings: a notification at interactive startup, and a stderr line in print and RPC modes and when listing models. Each warning names the config file and the dotted key path. The configuration still loads and unknown keys are preserved for forward compatibility.
+
 ## Troubleshooting
 
 <Accordions>
